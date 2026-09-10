@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TreeView?>
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="App.Controles.ComandaController" prefHeight="500.0" prefWidth="750.0">
+
+    <top>
+        <VBox style="-fx-padding: 15; -fx-background-color: #0A1E2E; -fx-spacing: 5;">
+            <Label fx:id="labelTituloComanda" text="Comanda - Mesa X" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: white;" />
+
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Pesquisar:" style="-fx-text-fill: #9fc3ff;" />
+                <TextField fx:id="campoPesquisa" promptText="Digite o nome do produto..." HBox.hgrow="ALWAYS" />
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <SplitPane dividerPositions="0.45">
+
+            <VBox spacing="10" style="-fx-padding: 10;">
+                <Label text="Selecionar Produto" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+
+                <TabPane fx:id="tabPaneCategorias" VBox.vgrow="ALWAYS" style="-fx-font-size: 14px;" />
+                <Label fx:id="labelItemSelecionado" style="-fx-font-weight: bold; -fx-text-fill: #007bff;" text="Selecione um item..." />
+
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="Quantidade:" />
+                    <Spinner fx:id="spinnerQuantidade" initialValue="1" min="1" max="99" prefWidth="80" editable="true" />
+                </HBox>
+                <TextField fx:id="campoObservacao" promptText="Observação (ex: sem gelo, mal passado)" />
+                <Button onAction="#adicionarAoCarrinho" text="⬇ Adicionar à Lista Provisória"
+                        maxWidth="Infinity" style="-fx-base: #17a2b8; -fx-text-fill: white;" />
+
+                <Separator />
+
+                <Label text="Itens a Enviar:" style="-fx-font-weight: bold;" />
+                <ListView fx:id="listaCarrinho" prefHeight="150.0" />
+
+                <HBox spacing="10">
+                    <Button onAction="#removerDoCarrinho" text="Remover Item" style="-fx-base: #dc3545; -fx-text-fill: white;" />
+                    <Button onAction="#confirmarPedidoCompleto" text="✅ ENVIAR PEDIDO"
+                            maxWidth="Infinity" HBox.hgrow="ALWAYS"
+                            style="-fx-base: #28a745; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px;" />
+                </HBox>
+            </VBox>
+
+            <VBox spacing="10" style="-fx-padding: 10;">
+                <Label text="Histórico de Pedidos" style="-fx-font-size: 16px; -fx-font-weight: bold;" />
+                <TreeView fx:id="arvorePedidos" VBox.vgrow="ALWAYS" showRoot="false" />
+                <Button fx:id="botaoRemPedido" onAction="#removerPedido" text="Remover Pedido Selecionado" maxWidth="Infinity" />
+            </VBox>
+
+        </SplitPane>
+    </center>
+
+    <bottom>
+        <HBox alignment="CENTER_RIGHT" style="-fx-padding: 10; -fx-background-color: #071826;" spacing="20">
+            <Label fx:id="labelTotal" text="Total: R$ 0,00" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;" />
+            <Button fx:id="botaoFecharComanda" onAction="#fecharComanda" text="Fechar Comanda" />
+        </HBox>
+    </bottom>
+
+</BorderPane>

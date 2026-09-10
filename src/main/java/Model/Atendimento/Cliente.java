@@ -1,0 +1,26 @@
+package Model.Atendimento;
+public class Cliente {
+
+    private String nome;
+    private String telefone;
+
+    public Cliente(){}
+
+    public  Cliente(String nome, String telefone){
+        this.nome = nome;
+        this.telefone = telefone;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    @Override
+    public String toString() {
+        return nome + (telefone != null ? " (" + telefone + ")" : "");
+    }
+}

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="App.Controles.RelatorioPedidosController" style="-fx-padding: 20;">
+
+    <top>
+        <VBox spacing="10" style="-fx-padding: 0 0 15 0;">
+            <Label text="Monitor de Pedidos (Cozinha/Bar)" style="-fx-font-size: 20px; -fx-font-weight: bold;" />
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Button text="🔄 Atualizar" onAction="#carregarDados" style="-fx-base: #007bff; -fx-text-fill: white;" />
+                <Label text="(Ordenado pelos mais recentes)" style="-fx-text-fill: #666;" />
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
+            <content>
+                <TilePane fx:id="painelPedidos" hgap="15" vgap="15" prefColumns="4"
+                          style="-fx-background-color: transparent; -fx-padding: 10;" />
+            </content>
+        </ScrollPane>
+    </center>
+
+</BorderPane>

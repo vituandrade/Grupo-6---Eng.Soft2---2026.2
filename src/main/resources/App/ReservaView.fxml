@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="App.Controles.ReservaController"
+      spacing="15" style="-fx-padding: 20; -fx-background-color: white;" prefWidth="400">
+
+    <Label text="Nova Reserva" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #0A1E2E;" />
+
+    <VBox spacing="5">
+        <Label text="Nome do Cliente:" />
+        <TextField fx:id="campoCliente" promptText="Ex: Maria Silva" />
+    </VBox>
+
+    <VBox spacing="5">
+        <Label text="Selecione as Mesas:" />
+        <ListView fx:id="listaMesas" prefHeight="100" />
+        <Label text="Segure CTRL para selecionar várias" style="-fx-font-size: 10px; -fx-text-fill: grey;" />
+    </VBox>
+
+    <HBox spacing="10">
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="Data:" />
+            <DatePicker fx:id="campoData" maxWidth="Infinity" />
+        </VBox>
+        <VBox spacing="5" HBox.hgrow="ALWAYS">
+            <Label text="Hora (HH:mm):" />
+            <TextField fx:id="campoHora" promptText="20:00" />
+        </VBox>
+    </HBox>
+
+    <VBox spacing="5">
+        <Label text="Tipo de Reserva:" />
+        <ComboBox fx:id="comboTipo" maxWidth="Infinity" />
+    </VBox>
+
+    <Region prefHeight="20" />
+
+    <Button text="CONFIRMAR RESERVA" onAction="#salvarReserva"
+            maxWidth="Infinity" style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10;" />
+
+</VBox>
