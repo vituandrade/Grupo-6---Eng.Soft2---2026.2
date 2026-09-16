@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="App.Controles.ListaComandasController" style="-fx-padding: 20;">
+
+    <top>
+        <VBox spacing="10" style="-fx-padding: 0 0 15 0;">
+            <Label text="Visão Geral de Comandas" style="-fx-font-size: 20px; -fx-font-weight: bold;" />
+
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Pesquisar:" />
+                <TextField fx:id="campoPesquisa" promptText="Nome do cliente ou nº mesa..." HBox.hgrow="ALWAYS" />
+                <Button text="🔄 Atualizar" onAction="#atualizarVisual" style="-fx-base: #007bff; -fx-text-fill: white;" />
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
+            <content>
+                <TilePane fx:id="painelComandas" hgap="15" vgap="15" prefColumns="4"
+                          style="-fx-background-color: transparent; -fx-padding: 10;" />
+            </content>
+        </ScrollPane>
+    </center>
+
+</BorderPane>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox alignment="CENTER" prefHeight="362.0" prefWidth="662.0" spacing="15" style="-fx-padding: 30; -fx-background-color: #003366;" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="App.Controles.LoginController">
+    <children>
+
+        <Label style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-padding: 0 0 10 0;" text="Login do Sistema" textFill="WHITE" />
+
+        <TextField fx:id="campoUsuario" maxWidth="250" promptText="Usuário" />
+        <PasswordField fx:id="campoSenha" maxWidth="250" promptText="Senha" />
+
+        <Button defaultButton="true" onAction="#fazerLogin" prefWidth="100" text="Entrar" />
+
+        <Label fx:id="mensagemErro" style="-fx-text-fill: red; -fx-padding: 10 0 0 0;" />
+    </children>
+
+    <padding>
+        <Insets bottom="20" left="20" right="20" top="20" />
+    </padding>
+
+</VBox>
