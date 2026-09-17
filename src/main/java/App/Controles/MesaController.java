@@ -30,12 +30,19 @@ public class MesaController extends BaseController{
     @FXML
     private BorderPane painelRaiz;
     private Node centroOriginalMesas;
+    private BorderPane painelConteudo;
     @FXML
     private Label labelUsuario;
+    @FXML
+    private Label labelTituloPagina;
     @FXML
     private TilePane painelMesas;
     @FXML
     private Button botaoProdutos;
+    @FXML
+    private Button botaoMesas;
+    @FXML
+    private Button botaoComandas;
 
 
     private Usuario usuarioLogado;
@@ -51,14 +58,15 @@ public class MesaController extends BaseController{
         this.config = config;
         this.persistenceService = service;
 
-        labelUsuario.setText("Usuário: " + usuario.getNome() +
-                " (" + usuario.getClass().getSimpleName() + ")");
+        labelUsuario.setText(usuario.getNome());
 
         if (usuario instanceof Interno) {
             botaoProdutos.setVisible(true);
+            botaoProdutos.setManaged(true);
         }
 
-        this.centroOriginalMesas = painelRaiz.getCenter();
+        this.painelConteudo = (BorderPane) painelRaiz.getCenter();
+        this.centroOriginalMesas = painelConteudo.getCenter();
         carregarMesas();
     }
 
@@ -148,7 +156,8 @@ public class MesaController extends BaseController{
     @FXML
     private void abrirDashboardMesas() {
         sincronizarMesasComConfig();
-        painelRaiz.setCenter(this.centroOriginalMesas);
+        painelConteudo.setCenter(this.centroOriginalMesas);
+        selecionarMenu(botaoMesas, "Mesas");
     }
 
     @FXML
@@ -159,7 +168,8 @@ public class MesaController extends BaseController{
             ProdutosController controller = loader.getController();
             this.listaDeProdutos = persistenceService.carregarProdutos();
             controller.inicializar(this.listaDeProdutos, this.persistenceService);
-            painelRaiz.setCenter(painelProdutos);
+            painelConteudo.setCenter(painelProdutos);
+            selecionarMenu(botaoProdutos, "Cardápio");
         } catch (IOException e) {
             e.printStackTrace();
             mostrarAlerta("Erro", "Não foi possível carregar a tela de produtos.");
@@ -201,12 +211,21 @@ public class MesaController extends BaseController{
 
             controller.inicializar(this.listaDeMesas, this.usuarioLogado, itensVendaveis);
 
-            painelRaiz.setCenter(painelComandas);
+            painelConteudo.setCenter(painelComandas);
+            selecionarMenu(botaoComandas, "Comandas");
 
         } catch (IOException e) {
             e.printStackTrace();
             mostrarAlerta("Erro", "Não foi possível abrir a lista de comandas.");
         }
+    }
+
+    private void selecionarMenu(Button botaoSelecionado, String titulo) {
+        labelTituloPagina.setText(titulo);
+        for (Button botao : List.of(botaoMesas, botaoComandas, botaoProdutos)) {
+            botao.getStyleClass().remove("menu-button-active");
+        }
+        botaoSelecionado.getStyleClass().add("menu-button-active");
     }
 
 }
