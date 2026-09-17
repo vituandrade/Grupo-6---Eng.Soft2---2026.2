@@ -2,6 +2,7 @@ package App.Controles;
 
 import App.Persistencia.InterfacePersistencia;
 import App.Persistencia.PersistenceService;
+import App.Validacao.LoginValidator;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.event.ActionEvent;
@@ -39,6 +40,17 @@ public class LoginController {
         this.config = persistenceService.carregarConfig();
         carregarUsuarios();
         carregarProdutos();
+
+        campoUsuario.textProperty().addListener((obs, anterior, atual) -> {
+            if (atual != null && !atual.isBlank()) {
+                limparErro(campoUsuario);
+            }
+        });
+        campoSenha.textProperty().addListener((obs, anterior, atual) -> {
+            if (atual != null && !atual.isBlank()) {
+                limparErro(campoSenha);
+            }
+        });
     }
 
     private void carregarUsuarios() {
@@ -54,6 +66,18 @@ public class LoginController {
     private void fazerLogin(ActionEvent event) {
         String nome = campoUsuario.getText().trim();
         String senha = campoSenha.getText();
+
+        limparErros();
+        LoginValidator.Resultado validacao = LoginValidator.validar(nome, senha);
+
+        if (!validacao.valido()) {
+            marcarInvalido(campoUsuario, validacao.usuarioVazio());
+            marcarInvalido(campoSenha, validacao.senhaVazia());
+            mensagemErro.setText("Preencha os campos obrigatórios.");
+            (validacao.usuarioVazio() ? campoUsuario : campoSenha).requestFocus();
+            return;
+        }
+
         Usuario usuarioEncontrado = null;
 
         for (Usuario u : this.listaDeUsuarios) {
@@ -66,7 +90,31 @@ public class LoginController {
         if (usuarioEncontrado != null) {
             abrirTelaMesas(usuarioEncontrado);
         } else {
-            mensagemErro.setText("Usuário ou senha incorretos!");
+            mensagemErro.setText("Credenciais inválidas.");
+            marcarInvalido(campoUsuario, true);
+            marcarInvalido(campoSenha, true);
+            campoSenha.clear();
+            campoSenha.requestFocus();
+        }
+    }
+
+    private void limparErros() {
+        mensagemErro.setText("");
+        marcarInvalido(campoUsuario, false);
+        marcarInvalido(campoSenha, false);
+    }
+
+    private void limparErro(Control campo) {
+        campo.getStyleClass().remove("campo-invalido");
+        if (!campoUsuario.getText().isBlank() && !campoSenha.getText().isBlank()) {
+            mensagemErro.setText("");
+        }
+    }
+
+    private void marcarInvalido(Control campo, boolean invalido) {
+        campo.getStyleClass().remove("campo-invalido");
+        if (invalido) {
+            campo.getStyleClass().add("campo-invalido");
         }
     }
 

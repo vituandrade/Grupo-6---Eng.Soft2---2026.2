@@ -1,0 +1,114 @@
+.login-root {
+    -fx-background-color: #eef2f3;
+    -fx-font-family: "Arial";
+}
+
+.brand-panel {
+    -fx-background-color: #102c33;
+}
+
+.brand-title {
+    -fx-font-size: 25px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #ffffff;
+}
+
+.brand-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #a9bbc0;
+}
+
+.brand-message {
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+    -fx-line-spacing: 4px;
+    -fx-text-fill: #ffffff;
+}
+
+.brand-description {
+    -fx-font-size: 14px;
+    -fx-line-spacing: 3px;
+    -fx-padding: 18px 0 0 0;
+    -fx-text-fill: #bdcacc;
+}
+
+.login-content {
+    -fx-padding: 48px;
+}
+
+.login-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12px;
+    -fx-border-color: #d8e0e3;
+    -fx-border-radius: 12px;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(16, 44, 51, 0.14), 22, 0.12, 0, 6);
+}
+
+.login-title {
+    -fx-font-size: 25px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1c2c32;
+}
+
+.login-subtitle {
+    -fx-font-size: 13px;
+    -fx-padding: 7px 0 0 0;
+    -fx-text-fill: #75858b;
+}
+
+.field-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #293b42;
+}
+
+.login-card .text-field {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 6px;
+    -fx-border-color: #cbd6da;
+    -fx-border-radius: 6px;
+    -fx-border-width: 1px;
+    -fx-font-size: 14px;
+    -fx-padding: 0 13px;
+    -fx-prompt-text-fill: #9ba7ab;
+}
+
+.login-card .text-field:focused {
+    -fx-border-color: #2b6672;
+    -fx-border-width: 1.5px;
+}
+
+.login-card .campo-invalido,
+.login-card .campo-invalido:focused {
+    -fx-border-color: #c83e38;
+    -fx-border-width: 1.5px;
+}
+
+.error-message {
+    -fx-font-size: 12px;
+    -fx-text-fill: #c83e38;
+}
+
+.login-button {
+    -fx-background-color: #ef9023;
+    -fx-background-radius: 6px;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111111;
+}
+
+.login-button:hover {
+    -fx-background-color: #dc7f16;
+}
+
+.login-button:pressed {
+    -fx-background-color: #c97312;
+}
+
+.login-footer {
+    -fx-alignment: center;
+    -fx-font-size: 11px;
+    -fx-text-fill: #94a0a5;
+}
