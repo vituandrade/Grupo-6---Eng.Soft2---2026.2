@@ -9,6 +9,7 @@ public abstract class Produto implements ItemVendavel {
     private int estoque;
     private String descricao;
     private String categoriaNome;
+    private boolean disponivel;
 
     public Produto(String nome, String descricao, double preco, int estoque, String categoriaNome) {
         this.id = proximoId++;
@@ -17,6 +18,7 @@ public abstract class Produto implements ItemVendavel {
         this.preco = preco;
         this.estoque = estoque;
         this.categoriaNome = categoriaNome;
+        this.disponivel = true;
     }
 
     public double getPreco() {
@@ -68,6 +70,14 @@ public abstract class Produto implements ItemVendavel {
 
     public void setCategoriaNome(String categoriaNome) {
         this.categoriaNome = categoriaNome;
+    }
+
+    public boolean isDisponivel() {
+        return disponivel;
+    }
+
+    public void setDisponivel(boolean disponivel) {
+        this.disponivel = disponivel;
     }
 
     @Override

@@ -1,58 +1,72 @@
 [
   {
+    "tipo_classe": "com_alcool",
     "id": 1,
     "nome": "Skol (600 ml)",
     "preco": 8.5,
     "estoque": 100,
     "descricao": "Cerveja Skol 600 ml",
-    "categoriaNome": "Com �?lcool"
+    "categoriaNome": "Com Álcool",
+    "disponivel": true
   },
   {
+    "tipo_classe": "sem_alcool",
     "id": 1,
-    "nome": "�?gua Sem Gás",
+    "nome": "Água Sem Gás",
     "preco": 3.5,
     "estoque": 120,
-    "descricao": "�?gua Mineral sem gás (250 ml)",
-    "categoriaNome": "Sem �?lcool"
+    "descricao": "Água mineral sem gás (250 ml)",
+    "categoriaNome": "Sem Álcool",
+    "disponivel": true
   },
   {
+    "tipo_classe": "tira_gosto",
     "id": 2,
     "nome": "Filé com Fritas",
     "preco": 35.0,
     "estoque": 30,
     "descricao": "Filé de Carneiro (200g) e Batata Frita (200 g)",
-    "categoriaNome": "Tira Gosto"
+    "categoriaNome": "Tira Gosto",
+    "disponivel": true
   },
   {
+    "tipo_classe": "refeicao",
     "id": 3,
     "nome": "Picanha (1kg)",
     "preco": 120.0,
     "estoque": 34,
     "descricao": "Acompanha: Arroz, Macaxeira Cozida, Farofa Vinagrete",
-    "categoriaNome": "Refeição"
+    "categoriaNome": "Refeição",
+    "disponivel": true
   },
   {
+    "tipo_classe": "servico",
     "id": 1,
-    "nome": "Couvert �?rtistico",
+    "nome": "Couvert Artístico",
     "preco": 10.0,
     "estoque": 9999,
-    "descricao": "Couvert �?rtistico",
-    "categoriaNome": "Serviço"
+    "descricao": "Couvert artístico",
+    "categoriaNome": "Serviço",
+    "disponivel": true
   },
   {
+    "tipo_classe": "descartavel",
     "id": 1,
     "nome": "Copos Plásticos",
     "preco": 15.0,
     "estoque": 35,
     "descricao": "20 copos descartavéis (200 ml)",
-    "categoriaNome": "Descartável"
+    "categoriaNome": "Descartável",
+    "disponivel": true
   },
   {
+    "tipo_classe": "sem_alcool",
     "id": 1,
     "nome": "Coca Cola Lata",
     "preco": 6.5,
     "estoque": 199,
     "descricao": "Cola Cola Lata ",
-    "categoriaNome": "Sem �?lcool"
+    "categoriaNome": "Sem Álcool",
+    "disponivel": true
   }
 ]

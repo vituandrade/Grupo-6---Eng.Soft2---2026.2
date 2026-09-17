@@ -40,7 +40,8 @@ public class PersistenceService implements InterfacePersistencia {
             .registerSubtype(Refeicao.class, "refeicao")
             .registerSubtype(TiraGosto.class, "tira_gosto")
             .registerSubtype(Servico.class, "servico")
-            .registerSubtype(Descartaveis.class, "descartavel");
+            .registerSubtype(Descartaveis.class, "descartavel")
+            .registerSubtype(ItemCardapio.class, "item_cardapio");
 
     private Gson gson = new GsonBuilder()
             .registerTypeAdapterFactory(produtoAdapter)
@@ -86,10 +87,11 @@ public class PersistenceService implements InterfacePersistencia {
     @Override
     public void salvarProdutos(List<Produto> produtos) {
         try (Writer writer = new FileWriter(PRODUTOS_FILE)) {
-            gson.toJson(produtos, writer);
+            Type listaTipo = new TypeToken<List<Produto>>() {}.getType();
+            gson.toJson(produtos, listaTipo, writer);
             System.out.println("Produtos salvos em " + PRODUTOS_FILE);
         } catch (IOException e) {
-            System.out.println("Erro ao salvar " + PRODUTOS_FILE + ": " + e.getMessage());
+            throw new PersistenciaException("Não foi possível salvar os itens do cardápio.", e);
         }
     }
 
@@ -115,7 +117,11 @@ public class PersistenceService implements InterfacePersistencia {
                 JsonObject obj = element.getAsJsonObject();
 
                 if (!obj.has("tipo_classe")) {
-                    obj.addProperty("tipo_classe", "refeicao");
+                    obj.addProperty("tipo_classe", inferirTipoClasse(obj));
+                    precisouMigrar = true;
+                }
+                if (!obj.has("disponivel")) {
+                    obj.addProperty("disponivel", true);
                     precisouMigrar = true;
                 }
             }
@@ -134,6 +140,20 @@ public class PersistenceService implements InterfacePersistencia {
             System.out.println("Erro crítico ao ler/migrar " + PRODUTOS_FILE + ": " + e.getMessage());
             return new ArrayList<>();
         }
+    }
+
+    private String inferirTipoClasse(JsonObject produto) {
+        if (!produto.has("categoriaNome")) {
+            return "refeicao";
+        }
+
+        String categoria = produto.get("categoriaNome").getAsString().toLowerCase();
+        if (categoria.contains("sem") && categoria.contains("lcool")) return "sem_alcool";
+        if (categoria.contains("com") && categoria.contains("lcool")) return "com_alcool";
+        if (categoria.contains("tira")) return "tira_gosto";
+        if (categoria.contains("servi")) return "servico";
+        if (categoria.contains("descart")) return "descartavel";
+        return "refeicao";
     }
 
     @Override

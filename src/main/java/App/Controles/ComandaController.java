@@ -249,6 +249,10 @@ public class ComandaController extends BaseController {
             if (item instanceof Produto) {
                 Produto p = (Produto) item;
 
+                if (!p.isDisponivel()) {
+                    continue;
+                }
+
                 if (!termo.isEmpty() && !p.getNome().toLowerCase().startsWith(termo)) {
                     continue;
                 }

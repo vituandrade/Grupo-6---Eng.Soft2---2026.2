@@ -1,215 +1,216 @@
 package App.Controles;
 
 import App.Persistencia.InterfacePersistencia;
-import Model.Produtos.*;
-import Model.Produtos.Alimentos.Alimentos;
-import Model.Produtos.Alimentos.Refeicao;
-import Model.Produtos.Alimentos.TiraGosto;
-import Model.Produtos.Bedidas.Bebidas;
-import Model.Produtos.Bedidas.ComAlcool;
-import Model.Produtos.Bedidas.SemAlcool;
-import Model.Produtos.Outros.Descartaveis;
-import Model.Produtos.Outros.Outros;
-import Model.Produtos.Outros.Servico;
+import App.Validacao.CadastroItemValidator;
+import Model.Produtos.ItemCardapio;
+import Model.Produtos.Produto;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.stage.StageStyle;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public class ProdutosController extends BaseController {
 
-    @FXML private ListView<Produto> listaProdutos;
-    @FXML private Label labelFormulario;
-    @FXML private TextField campoNome;
-    @FXML private TextField campoDescricao;
-    @FXML private TextField campoPreco;
-    @FXML private TextField campoEstoque;
-    @FXML private Label labelEstoque;
-    @FXML private ComboBox<String> comboTipoPrincipal;
-    @FXML private ComboBox<String> comboSubTipo;
+    private static final String TODAS_AS_CATEGORIAS = "Todas as categorias";
+
+    @FXML private TextField campoBusca;
+    @FXML private ComboBox<String> filtroCategoria;
+    @FXML private Button botaoNovoItem;
+    @FXML private TableView<Produto> tabelaItens;
+    @FXML private TableColumn<Produto, String> colunaNome;
+    @FXML private TableColumn<Produto, String> colunaCategoria;
+    @FXML private TableColumn<Produto, Double> colunaPreco;
+    @FXML private TableColumn<Produto, String> colunaDisponibilidade;
+    @FXML private Label labelMensagem;
 
     private InterfacePersistencia persistenceService;
     private List<Produto> listaProdutosCentral;
-    private ObservableList<Produto> observableListProdutos;
-    private Produto produtoSelecionado = null;
+    private ObservableList<Produto> itens;
+    private FilteredList<Produto> itensFiltrados;
+
+    @FXML
+    private void initialize() {
+        tabelaItens.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        colunaNome.setCellValueFactory(dado -> new SimpleStringProperty(dado.getValue().getNome()));
+        colunaCategoria.setCellValueFactory(dado -> new SimpleStringProperty(dado.getValue().getCategoriaNome()));
+        colunaPreco.setCellValueFactory(dado -> new SimpleDoubleProperty(dado.getValue().getPreco()).asObject());
+        colunaDisponibilidade.setCellValueFactory(dado -> new SimpleStringProperty(
+                dado.getValue().isDisponivel() ? "Disponível" : "Indisponível"
+        ));
+
+        colunaPreco.setCellFactory(coluna -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double preco, boolean vazio) {
+                super.updateItem(preco, vazio);
+                setText(vazio || preco == null
+                        ? null
+                        : String.format(Locale.forLanguageTag("pt-BR"), "R$ %.2f", preco));
+            }
+        });
+
+        colunaDisponibilidade.setCellFactory(coluna -> new TableCell<>() {
+            @Override
+            protected void updateItem(String disponibilidade, boolean vazio) {
+                super.updateItem(disponibilidade, vazio);
+                getStyleClass().removeAll("status-disponivel", "status-indisponivel");
+                if (vazio || disponibilidade == null) {
+                    setText(null);
+                    return;
+                }
+                setText(disponibilidade);
+                getStyleClass().add("Disponível".equals(disponibilidade)
+                        ? "status-disponivel"
+                        : "status-indisponivel");
+            }
+        });
+
+        tabelaItens.setPlaceholder(new Label("Nenhum item cadastrado."));
+    }
 
     public void inicializar(List<Produto> listaProdutosCentral, InterfacePersistencia service) {
         this.listaProdutosCentral = listaProdutosCentral;
         this.persistenceService = service;
+        this.itens = FXCollections.observableArrayList(listaProdutosCentral);
+        this.itensFiltrados = new FilteredList<>(itens, item -> true);
 
-        comboTipoPrincipal.getItems().setAll("Alimento", "Bebida", "Outros");
+        SortedList<Produto> itensOrdenados = new SortedList<>(itensFiltrados);
+        itensOrdenados.comparatorProperty().bind(tabelaItens.comparatorProperty());
+        tabelaItens.setItems(itensOrdenados);
 
-        comboTipoPrincipal.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            atualizarComboSubTipo(newVal);
-        });
-
-        comboSubTipo.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            ajustarVisibilidadeEstoque(newVal);
-        });
-
-        this.observableListProdutos = FXCollections.observableArrayList(listaProdutosCentral);
-        this.listaProdutos.setItems(observableListProdutos);
-
-        this.listaProdutos.getSelectionModel().selectedItemProperty().addListener(
-                (observable, oldValue, newValue) -> selecionarProduto(newValue)
-        );
-
-        limparCampos();
-    }
-
-    private void ajustarVisibilidadeEstoque(String subTipo) {
-        boolean ehServico = "Serviço".equals(subTipo);
-
-        if (ehServico) {
-            labelEstoque.setVisible(false);
-            campoEstoque.setVisible(false);
-            campoEstoque.setText("9999");
-        } else {
-            labelEstoque.setVisible(true);
-            campoEstoque.setVisible(true);
-            if ("9999".equals(campoEstoque.getText())) {
-                campoEstoque.setText("");
-            }
-        }
-    }
-
-    private void atualizarComboSubTipo(String principal) {
-        comboSubTipo.getItems().clear();
-        campoEstoque.setDisable(false);
-
-        if (principal == null) {
-            comboSubTipo.setDisable(true);
-            return;
-        }
-        comboSubTipo.setDisable(false);
-
-        if (principal.equals("Alimento")) {
-            comboSubTipo.getItems().setAll("Refeição", "Tira Gosto");
-        } else if (principal.equals("Bebida")) {
-            comboSubTipo.getItems().setAll("Com Álcool", "Sem Álcool");
-        } else if (principal.equals("Outros")) {
-            comboSubTipo.getItems().setAll("Serviço", "Descartável");
-        }
-    }
-
-    private void selecionarProduto(Produto p) {
-        this.produtoSelecionado = p;
-        if (p == null) {
-            limparCampos();
-            return;
-        }
-
-        labelFormulario.setText("Editando: " + p.getNome());
-        campoNome.setText(p.getNome());
-        campoDescricao.setText(p.getDescricao());
-        campoPreco.setText(String.format("%.2f", p.getPreco()));
-        campoEstoque.setText(String.valueOf(p.getEstoque()));
-
-
-        if (p instanceof Bebidas) {
-            comboTipoPrincipal.setValue("Bebida");
-            if (p instanceof ComAlcool) comboSubTipo.setValue("Com Álcool");
-            if (p instanceof SemAlcool) comboSubTipo.setValue("Sem Álcool");
-        } else if (p instanceof Alimentos) {
-            comboTipoPrincipal.setValue("Alimento");
-            if (p instanceof Refeicao) comboSubTipo.setValue("Refeição");
-            if (p instanceof TiraGosto) comboSubTipo.setValue("Tira Gosto");
-        }
-        else if (p instanceof Outros) {
-            comboTipoPrincipal.setValue("Outros");
-            if (p instanceof Servico) {
-                comboSubTipo.setValue("Serviço");
-            } else if (p instanceof Descartaveis) {
-                comboSubTipo.setValue("Descartável");
-            }
-        }
-        ajustarVisibilidadeEstoque(comboSubTipo.getValue());
-    }
-
-    private Produto criarInstanciaDaClasse(String tipo, String nome, String desc, double preco, int est, String grupo) {
-        switch (tipo) {
-            case "Com Álcool": return new ComAlcool(nome, desc, preco, est, grupo);
-            case "Sem Álcool": return new SemAlcool(nome, desc, preco, est, grupo);
-            case "Refeição":   return new Refeicao(nome, desc, preco, est, grupo);
-            case "Tira Gosto": return new TiraGosto(nome, desc, preco, est, grupo);
-            case "Serviço":
-
-                return new Servico(nome, desc, preco, null, grupo);
-            case "Descartável":
-                return new Descartaveis(nome, desc, preco, est, grupo);
-
-            default:
-                return new Refeicao(nome, desc, preco, est, grupo);
-        }
+        atualizarCategorias();
+        campoBusca.textProperty().addListener((obs, anterior, atual) -> aplicarFiltros());
+        filtroCategoria.valueProperty().addListener((obs, anterior, atual) -> aplicarFiltros());
     }
 
     @FXML
-    private void salvar() {
+    private void abrirCadastro() {
         try {
-            String nome = campoNome.getText();
-            String desc = campoDescricao.getText();
-            double preco = Double.parseDouble(campoPreco.getText().replace(",", "."));
-            int est = Integer.parseInt(campoEstoque.getText());
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/App/CadastrarItemCardapio.fxml"));
+            Node formulario = loader.load();
+            CadastrarItemCardapioController controller = loader.getController();
 
-            String subTipo = comboSubTipo.getValue();
+            ButtonType salvar = new ButtonType("SALVAR", ButtonBar.ButtonData.OK_DONE);
+            ButtonType cancelar = new ButtonType("CANCELAR", ButtonBar.ButtonData.CANCEL_CLOSE);
 
-            String grupo = subTipo;
+            Dialog<ButtonType> dialogo = new Dialog<>();
+            dialogo.setTitle("Cadastrar item do cardápio");
+            dialogo.setHeaderText("Cadastrar item do cardápio");
+            dialogo.initStyle(StageStyle.TRANSPARENT);
+            dialogo.initOwner(botaoNovoItem.getScene().getWindow());
+            dialogo.getDialogPane().setContent(formulario);
+            dialogo.getDialogPane().getButtonTypes().addAll(cancelar, salvar);
+            dialogo.getDialogPane().getStylesheets().add(
+                    getClass().getResource("/App/Cardapio.css").toExternalForm()
+            );
 
-            if (nome.isEmpty() || subTipo == null) {
-                mostrarAlerta("Erro", "Preencha todos os campos obrigatórios.");
-                return;
-            }
+            Button botaoSalvar = (Button) dialogo.getDialogPane().lookupButton(salvar);
+            Button botaoCancelar = (Button) dialogo.getDialogPane().lookupButton(cancelar);
+            botaoSalvar.getStyleClass().add("save-button");
+            botaoCancelar.getStyleClass().add("cancel-button");
+            botaoSalvar.addEventFilter(ActionEvent.ACTION, evento -> {
+                CadastroItemValidator.Resultado resultado = controller.validar();
+                if (!resultado.valido()) {
+                    evento.consume();
+                    return;
+                }
 
-            if (this.produtoSelecionado == null) {
-                Produto novoProduto = criarInstanciaDaClasse(subTipo, nome, desc, preco, est, grupo);
-                this.listaProdutosCentral.add(novoProduto);
-                this.observableListProdutos.add(novoProduto);
-            } else {
-                this.produtoSelecionado.setNome(nome);
-                this.produtoSelecionado.setDescricao(desc);
-                this.produtoSelecionado.setPreco(preco);
-                this.produtoSelecionado.setEstoque(est);
-                this.produtoSelecionado.setCategoriaNome(grupo);
+                Produto novoItem = new ItemCardapio(
+                        resultado.nome(),
+                        resultado.categoria(),
+                        resultado.descricao(),
+                        resultado.preco(),
+                        resultado.disponivel()
+                );
 
-                this.listaProdutos.refresh();
-            }
+                List<Produto> listaAtualizada = new ArrayList<>(listaProdutosCentral);
+                listaAtualizada.add(novoItem);
 
-            this.persistenceService.salvarProdutos(this.listaProdutosCentral);
-            limparCampos();
+                try {
+                    persistenceService.salvarProdutos(listaAtualizada);
+                    listaProdutosCentral.add(novoItem);
+                    itens.add(novoItem);
+                    atualizarCategorias();
+                    aplicarFiltros();
+                    labelMensagem.setText("Item cadastrado com sucesso.");
+                } catch (RuntimeException erro) {
+                    evento.consume();
+                    controller.exibirFalhaDePersistencia(
+                            "Não foi possível gravar o item. Tente novamente ou selecione Cancelar."
+                    );
+                }
+            });
 
-        } catch (NumberFormatException e) {
-            mostrarAlerta("Erro", "Preço e Estoque devem ser números.");
+            dialogo.showAndWait();
+        } catch (IOException e) {
+            mostrarAlerta("Erro", "Não foi possível abrir o cadastro de item.");
         }
     }
 
+    private void atualizarCategorias() {
+        String categoriaSelecionada = filtroCategoria.getValue();
+        Set<String> categorias = new LinkedHashSet<>();
+        categorias.add(TODAS_AS_CATEGORIAS);
+        categorias.add("Lanche");
+        categorias.add("Bebida");
+        categorias.add("Prato");
+        categorias.add("Sobremesa");
+        itens.stream()
+                .map(Produto::getCategoriaNome)
+                .filter(categoria -> categoria != null && !categoria.isBlank())
+                .forEach(categorias::add);
 
-    @FXML
-    private void removerProduto() {
-        if (this.produtoSelecionado == null) {
-            mostrarAlerta("Erro", "Nenhum produto selecionado para remover.");
+        filtroCategoria.getItems().setAll(categorias);
+        filtroCategoria.setValue(categorias.contains(categoriaSelecionada)
+                ? categoriaSelecionada
+                : TODAS_AS_CATEGORIAS);
+    }
+
+    private void aplicarFiltros() {
+        if (itensFiltrados == null) {
             return;
         }
-        this.listaProdutosCentral.remove(this.produtoSelecionado);
-        this.observableListProdutos.remove(this.produtoSelecionado);
-        this.persistenceService.salvarProdutos(this.listaProdutosCentral);
-        limparCampos();
-    }
 
-    @FXML
-    private void limparCampos() {
-        this.produtoSelecionado = null;
-        labelFormulario.setText("Adicionar Novo Produto");
-        campoNome.clear();
-        campoDescricao.clear();
-        campoPreco.clear();
-        campoEstoque.clear();
-        comboTipoPrincipal.setValue(null);
-        comboSubTipo.setValue(null);
-        comboSubTipo.setDisable(true);
+        String termo = campoBusca.getText() == null ? "" : campoBusca.getText().trim().toLowerCase();
+        String categoria = filtroCategoria.getValue();
 
-        labelEstoque.setVisible(true);
-        campoEstoque.setVisible(true);
-
+        itensFiltrados.setPredicate(item -> {
+            String nome = item.getNome() == null ? "" : item.getNome().toLowerCase();
+            String descricao = item.getDescricao() == null ? "" : item.getDescricao().toLowerCase();
+            String categoriaItem = item.getCategoriaNome() == null
+                    ? ""
+                    : item.getCategoriaNome().toLowerCase();
+            boolean correspondeBusca = termo.isEmpty()
+                    || nome.contains(termo)
+                    || descricao.contains(termo)
+                    || categoriaItem.contains(termo);
+            boolean correspondeCategoria = categoria == null
+                    || TODAS_AS_CATEGORIAS.equals(categoria)
+                    || categoria.equals(item.getCategoriaNome());
+            return correspondeBusca && correspondeCategoria;
+        });
     }
 }
