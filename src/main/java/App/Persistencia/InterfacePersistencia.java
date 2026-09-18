@@ -1,5 +1,7 @@
 package App.Persistencia;
 
+import Model.Atendimento.Mesa;
+import Model.Reservas.Reserva;
 import Model.Sistema.Config;
 import Model.Produtos.Produto;
 import Model.Usuarios.Usuario;
@@ -15,6 +17,13 @@ public interface InterfacePersistencia {
 
     List<Produto> carregarProdutos();
     void salvarProdutos(List<Produto> produtos);
+
+    // Reservas
+    void salvarReserva(Reserva reserva);
+    List<Reserva> carregarReservas(List<Mesa> mesas);
+    void removerReserva(int reservaId);
+
+    // Histórico de pagamentos
+    void registrarPagamento(int numMesa, String clienteNome, double valor,
+                            String tipoPagamento, String detalhes);
 }
-
-

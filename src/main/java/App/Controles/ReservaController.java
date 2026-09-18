@@ -1,5 +1,6 @@
 package App.Controles;
 
+import App.Persistencia.InterfacePersistencia;
 import Model.Atendimento.Mesa;
 import Model.Reservas.*;
 import javafx.fxml.FXML;
@@ -21,9 +22,12 @@ public class ReservaController {
     @FXML private ComboBox<String> comboTipo;
 
     private Runnable onReservaSalva;
+    private InterfacePersistencia persistenceService;
 
-    public void inicializar(List<Mesa> todasMesas, Runnable callback) {
+    public void inicializar(List<Mesa> todasMesas, Runnable callback,
+                            InterfacePersistencia persistenceService) {
         this.onReservaSalva = callback;
+        this.persistenceService = persistenceService;
 
         listaMesas.getItems().addAll(todasMesas);
         listaMesas.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -107,6 +111,12 @@ public class ReservaController {
                 }
 
                 mesa.adicionarReserva(novaReserva);
+
+                // Persiste no banco de dados
+                if (persistenceService != null) {
+                    persistenceService.salvarReserva(novaReserva);
+                }
+
                 resumo.append("Mesa ").append(mesa.getNumMesa())
                         .append(" - Sinal: R$ ").append(String.format("%.2f", novaReserva.calcularValorAdiantamento()))
                         .append("\n");

@@ -85,6 +85,10 @@ public class MesaController extends BaseController{
             VBox mesaBox = criarMesaVisual(novaMesa);
             painelMesas.getChildren().add(mesaBox);
         }
+
+        // Carrega reservas persistidas no banco e vincula às mesas
+        this.persistenceService.carregarReservas(this.listaDeMesas);
+        atualizarVisualDasMesas();
     }
 
     private void atualizarVisualDasMesas() {
@@ -146,7 +150,8 @@ public class MesaController extends BaseController{
             GerenciarMesaController controller = loader.getController();
 
             List<ItemVendavel> itensVendaveis = new ArrayList<>(this.persistenceService.carregarProdutos());
-            controller.inicializar(mesaSelecionada, this.usuarioLogado, itensVendaveis);
+            controller.inicializar(mesaSelecionada, this.usuarioLogado, itensVendaveis,
+                    this.persistenceService);
 
             Stage gerenciarStage = new Stage();
             gerenciarStage.initModality(Modality.APPLICATION_MODAL);
@@ -242,7 +247,8 @@ public class MesaController extends BaseController{
             Parent root = loader.load();
 
             ReservaController controller = loader.getController();
-            controller.inicializar(this.listaDeMesas, this::atualizarVisualDasMesas); // Passa a lista!
+            controller.inicializar(this.listaDeMesas, this::atualizarVisualDasMesas,
+                    this.persistenceService);
 
             Stage stage = new Stage();
             stage.setTitle("Nova Reserva");

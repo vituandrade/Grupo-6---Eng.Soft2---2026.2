@@ -4,15 +4,17 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import org.jetbrains.annotations.NotNull;
 
 public class Main extends Application {
     @Override
-    public void start(@NotNull Stage stage) throws Exception {
+    public void start(Stage stage) throws Exception {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/App/Login.fxml"));
         Scene scene = new Scene(fxmlLoader.load());
         stage.setTitle("Login - Sistema Restaurante");
         stage.setScene(scene);
+        stage.setMinWidth(480);
+        stage.setMinHeight(360);
+        stage.centerOnScreen();
         stage.show();
     }
 

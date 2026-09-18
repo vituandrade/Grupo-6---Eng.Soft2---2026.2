@@ -1,6 +1,7 @@
 package App.Persistencia;
 
 import App.Utils.RuntimeTypeAdapterFactory;
+import Model.Atendimento.Mesa;
 import Model.Produtos.*;
 import Model.Produtos.Alimentos.Refeicao;
 import Model.Produtos.Alimentos.TiraGosto;
@@ -8,6 +9,7 @@ import Model.Produtos.Bedidas.ComAlcool;
 import Model.Produtos.Bedidas.SemAlcool;
 import Model.Produtos.Outros.Descartaveis;
 import Model.Produtos.Outros.Servico;
+import Model.Reservas.Reserva;
 import Model.Sistema.Config;
 import Model.Usuarios.Garcom;
 import Model.Usuarios.Interno;
@@ -23,11 +25,14 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,13 +56,21 @@ public class PersistenceService implements InterfacePersistencia {
     private static final String USUARIOS_FILE = "Dados/usuarios.json";
     private static final String PRODUTOS_FILE = "Dados/produtos.json";
 
+    private void garantirDiretorio(String caminhoArquivo) {
+        File arquivo = new File(caminhoArquivo);
+        File pasta = arquivo.getParentFile();
+        if (pasta != null && !pasta.exists()) {
+            pasta.mkdirs();
+        }
+    }
+
 
     @Override
     public Config carregarConfig() {
         File configFile = new File(CONFIG_FILE);
 
         if (configFile.exists()) {
-            try (Reader reader = new FileReader(configFile)) {
+            try (Reader reader = new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8)) {
                 Config config = gson.fromJson(reader, Config.class);
                 System.out.println("Configurações carregadas de " + CONFIG_FILE);
                 return config;
@@ -75,7 +88,8 @@ public class PersistenceService implements InterfacePersistencia {
 
     @Override
     public void salvarConfig(Config config) {
-        try (Writer writer = new FileWriter(CONFIG_FILE)) {
+        garantirDiretorio(CONFIG_FILE);
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(CONFIG_FILE), StandardCharsets.UTF_8)) {
             gson.toJson(config, writer);
             System.out.println("Configurações salvas em " + CONFIG_FILE);
         } catch (IOException e) {
@@ -85,8 +99,10 @@ public class PersistenceService implements InterfacePersistencia {
 
     @Override
     public void salvarProdutos(List<Produto> produtos) {
-        try (Writer writer = new FileWriter(PRODUTOS_FILE)) {
-            gson.toJson(produtos, writer);
+        garantirDiretorio(PRODUTOS_FILE);
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(PRODUTOS_FILE), StandardCharsets.UTF_8)) {
+            Type listaTipo = new TypeToken<ArrayList<Produto>>() {}.getType();
+            gson.toJson(produtos, listaTipo, writer);
             System.out.println("Produtos salvos em " + PRODUTOS_FILE);
         } catch (IOException e) {
             System.out.println("Erro ao salvar " + PRODUTOS_FILE + ": " + e.getMessage());
@@ -102,7 +118,7 @@ public class PersistenceService implements InterfacePersistencia {
             return new ArrayList<>();
         }
 
-        try (Reader reader = new FileReader(produtoFile)) {
+        try (Reader reader = new InputStreamReader(new FileInputStream(produtoFile), StandardCharsets.UTF_8)) {
             JsonElement root = JsonParser.parseReader(reader);
 
             if (root == null || root.isJsonNull()) return new ArrayList<>();
@@ -115,7 +131,7 @@ public class PersistenceService implements InterfacePersistencia {
                 JsonObject obj = element.getAsJsonObject();
 
                 if (!obj.has("tipo_classe")) {
-                    obj.addProperty("tipo_classe", "refeicao");
+                    obj.addProperty("tipo_classe", inferirTipoClasse(obj));
                     precisouMigrar = true;
                 }
             }
@@ -141,7 +157,7 @@ public class PersistenceService implements InterfacePersistencia {
         File usuariosFile = new File(USUARIOS_FILE);
 
         if (usuariosFile.exists()) {
-            try (Reader reader = new FileReader(usuariosFile)) {
+            try (Reader reader = new InputStreamReader(new FileInputStream(usuariosFile), StandardCharsets.UTF_8)) {
                 JsonArray jsonArray = JsonParser.parseReader(reader).getAsJsonArray();
                 List<Usuario> usuarios = new ArrayList<>();
 
@@ -171,7 +187,8 @@ public class PersistenceService implements InterfacePersistencia {
 
     @Override
     public void salvarUsuarios(List<Usuario> usuarios) {
-        try (Writer writer = new FileWriter(USUARIOS_FILE)) {
+        garantirDiretorio(USUARIOS_FILE);
+        try (Writer writer = new OutputStreamWriter(new FileOutputStream(USUARIOS_FILE), StandardCharsets.UTF_8)) {
             gson.toJson(usuarios, writer);
             System.out.println("Usuários salvos em " + USUARIOS_FILE);
         } catch (IOException e) {
@@ -180,6 +197,26 @@ public class PersistenceService implements InterfacePersistencia {
     }
 
 
+    private String inferirTipoClasse(JsonObject obj) {
+        String categoria = obj.has("categoriaNome") ? obj.get("categoriaNome").getAsString().toLowerCase() : "";
+        if (categoria.contains("álcool") || categoria.contains("alcool")) {
+            if (categoria.contains("sem")) {
+                return "sem_alcool";
+            }
+            return "com_alcool";
+        }
+        if (categoria.contains("tira")) {
+            return "tira_gosto";
+        }
+        if (categoria.contains("serviço") || categoria.contains("servico")) {
+            return "servico";
+        }
+        if (categoria.contains("descart")) {
+            return "descartavel";
+        }
+        return "refeicao";
+    }
+
     private List<Usuario> criarUsuariosPadraoESalvar() {
         List<Usuario> padrao = new ArrayList<>();
         padrao.add(new Interno("admin", "admin"));
@@ -187,4 +224,23 @@ public class PersistenceService implements InterfacePersistencia {
         salvarUsuarios(padrao);
         return padrao;
     }
+
+    // Metodos de Reservas/Pagamentos - nao suportados no servico JSON.
+    // Use DatabaseService para persistencia dessas entidades.
+
+    @Override
+    public void salvarReserva(Model.Reservas.Reserva reserva) {}
+
+    @Override
+    public java.util.List<Model.Reservas.Reserva> carregarReservas(java.util.List<Model.Atendimento.Mesa> mesas) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void removerReserva(int reservaId) {}
+
+    @Override
+    public void registrarPagamento(int numMesa, String clienteNome, double valor,
+                                    String tipoPagamento, String detalhes) {}
+
 }

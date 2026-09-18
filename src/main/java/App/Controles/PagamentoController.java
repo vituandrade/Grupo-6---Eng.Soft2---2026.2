@@ -1,5 +1,6 @@
 package App.Controles;
 
+import App.Persistencia.InterfacePersistencia;
 import Model.Atendimento.Comanda;
 import Model.Atendimento.Mesa;
 import Model.Pagamento.*;
@@ -33,10 +34,18 @@ public class PagamentoController {
     private boolean pagamentoRealizado = false;
     private Mesa mesaSendoPaga;
     private Comanda comandaAlvo;
+    private InterfacePersistencia persistenceService;
 
     public void inicializar(double v, Mesa mesa, Comanda comanda) {
+        inicializar(v, mesa, comanda, null);
+    }
+
+    public void inicializar(double v, Mesa mesa, Comanda comanda, InterfacePersistencia service) {
         this.valorDaConta = comanda.calcularTotal();
         this.pagamentoRealizado = false;
+        this.mesaSendoPaga = mesa;
+        this.comandaAlvo = comanda;
+        this.persistenceService = service;
 
         labelValorTotal.setText("R$ " + String.format("%.2f", this.valorDaConta));
 
@@ -102,6 +111,20 @@ public class PagamentoController {
             if (pagamento != null && pagamento.processar()) {
 
                 String comprovante = ((Pagamento) pagamento).gerarComprovante();
+
+                // Registra pagamento no banco de dados
+                if (persistenceService != null && mesaSendoPaga != null) {
+                    String clienteNome = comandaAlvo != null ? comandaAlvo.getClienteNome() : "Desconhecido";
+                    String detalhes = comprovante.replace("\n", " | ");
+                    persistenceService.registrarPagamento(
+                            mesaSendoPaga.getNumMesa(),
+                            clienteNome,
+                            this.valorDaConta,
+                            metodo,
+                            detalhes
+                    );
+                }
+
                 mostrarAlerta("Pagamento Registrado", comprovante);
                 this.pagamentoRealizado = true;
                 fecharJanela();

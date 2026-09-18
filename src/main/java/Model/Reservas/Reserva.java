@@ -30,6 +30,10 @@ public abstract class Reserva implements Agendavel {
         return nomeCliente;
     }
 
+    public Mesa getMesa() {
+        return mesa;
+    }
+
     @Override
     public String toString() {
         return "Cliente: " + nomeCliente + " (" + dataHora.format(DateTimeFormatter.ofPattern("HH:mm")) + ")";

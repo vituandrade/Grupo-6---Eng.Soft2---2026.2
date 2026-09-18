@@ -1,5 +1,6 @@
 package App.Controles;
 
+import App.Persistencia.InterfacePersistencia;
 import Model.Atendimento.Comanda;
 import Model.Atendimento.Mesa;
 import Model.Produtos.ItemVendavel;
@@ -28,11 +29,18 @@ public class GerenciarMesaController extends BaseController {
     private Mesa mesa;
     private Usuario atendente;
     private List<ItemVendavel> produtosDisponiveis;
+    private InterfacePersistencia persistenceService;
 
     public void inicializar(Mesa mesa, Usuario atendente, List<ItemVendavel> itens) {
+        inicializar(mesa, atendente, itens, null);
+    }
+
+    public void inicializar(Mesa mesa, Usuario atendente, List<ItemVendavel> itens,
+                            InterfacePersistencia service) {
         this.mesa = mesa;
         this.atendente = atendente;
         this.produtosDisponiveis = itens;
+        this.persistenceService = service;
         labelTituloMesa.setText("Gerenciando Mesa " + mesa.getNumMesa());
         atualizarListaComandas();
         this.listaComandas.getSelectionModel().selectedItemProperty().addListener(
@@ -74,7 +82,8 @@ public class GerenciarMesaController extends BaseController {
             Parent root = loader.load();
 
             PagamentoController pgtoController = loader.getController();
-            pgtoController.inicializar(selecionada.calcularTotal(), this.mesa, selecionada);
+            pgtoController.inicializar(selecionada.calcularTotal(), this.mesa, selecionada,
+                    this.persistenceService);
 
             Stage stage = new Stage();
             stage.setTitle("Pagamento Individual");
