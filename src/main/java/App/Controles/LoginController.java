@@ -1,6 +1,7 @@
 package App.Controles;
 
 import App.Persistencia.InterfacePersistencia;
+import App.Persistencia.DatabaseService;
 import App.Persistencia.PersistenceService;
 import App.Validacao.LoginValidator;
 import javafx.fxml.FXML;
@@ -36,7 +37,7 @@ public class LoginController {
 
     @FXML
     public void initialize() {
-        this.persistenceService = new PersistenceService();
+        this.persistenceService = new DatabaseService();
         this.config = persistenceService.carregarConfig();
         carregarUsuarios();
         carregarProdutos();

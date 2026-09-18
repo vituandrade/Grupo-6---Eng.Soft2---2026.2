@@ -3,6 +3,8 @@ module restaurante.sistemagestaorestaurante {
     requires javafx.fxml;
 
     requires com.google.gson;
+    requires java.sql;
+    requires org.xerial.sqlitejdbc;
 
     opens App to javafx.fxml;
     exports App;
