@@ -43,6 +43,7 @@
                     </padding>
                     <Label fx:id="labelTituloPagina" styleClass="page-title" text="Mesas" />
                     <Region HBox.hgrow="ALWAYS" />
+                    <Button onAction="#abrirNovaComanda" text="Abrir comanda" style="-fx-font-weight: bold;" />
                     <Label fx:id="labelUsuario" styleClass="user-label" text="Funcionário autorizado" />
                 </HBox>
             </top>
