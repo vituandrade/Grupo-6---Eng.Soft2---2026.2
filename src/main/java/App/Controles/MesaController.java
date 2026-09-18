@@ -2,6 +2,7 @@ package App.Controles;
 
 import App.Persistencia.InterfacePersistencia;
 import Model.Atendimento.Mesa;
+import Model.Atendimento.Comanda;
 import Model.Produtos.ItemVendavel;
 import Model.Produtos.Produto;
 import Model.Sistema.Config;
@@ -48,6 +49,7 @@ public class MesaController extends BaseController{
     private Usuario usuarioLogado;
     private List<Mesa> listaDeMesas = new ArrayList<>();
     private List<Produto> listaDeProdutos;
+    private final List<Comanda> comandasSemMesa = new ArrayList<>();
 
     private Config config;
     private InterfacePersistencia persistenceService;
@@ -135,7 +137,7 @@ public class MesaController extends BaseController{
             GerenciarMesaController controller = loader.getController();
 
             List<ItemVendavel> itensVendaveis = new ArrayList<>(this.persistenceService.carregarProdutos());
-            controller.inicializar(mesaSelecionada, this.usuarioLogado, itensVendaveis);
+            controller.inicializar(mesaSelecionada, this.usuarioLogado, this.comandasSemMesa, itensVendaveis);
 
             Stage gerenciarStage = new Stage();
             gerenciarStage.initModality(Modality.APPLICATION_MODAL);
@@ -151,6 +153,67 @@ public class MesaController extends BaseController{
             e.printStackTrace();
             mostrarAlerta("Erro", "Não foi possível abrir o gerenciador da mesa.");
         }
+    }
+
+    @FXML
+    private void abrirNovaComanda() {
+        try {
+            sincronizarMesasComConfig();
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/App/AbrirComandaView.fxml"));
+            Parent root = loader.load();
+            AbrirComandaController dialogController = loader.getController();
+            dialogController.inicializar(this.listaDeMesas);
+
+            Stage stage = new Stage();
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setTitle("Abrir comanda");
+            stage.setScene(new Scene(root, 800, 700));
+            stage.setResizable(false);
+            stage.showAndWait();
+
+            if (dialogController.isConfirmada() && dialogController.getComandaCriada() != null) {
+
+                Comanda comandaCriada =
+                        dialogController.getComandaCriada();
+
+                Mesa mesaDaComanda =
+                        dialogController.getMesaSelecionada();
+
+                // Se não houver mesa, guarda na lista de comandas sem mesa
+                if (mesaDaComanda == null) {
+                    comandasSemMesa.add(comandaCriada);
+                }
+
+                ComandaController comandaController =
+                        abrirTelaDaComanda(
+                                mesaDaComanda,
+                                comandaCriada
+                        );
+
+                if (comandaController != null) {
+                    atualizarVisualDasMesas();
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostrarAlerta("Erro", "Não foi possível abrir o diálogo de nova comanda.");
+        }
+    }
+
+    private ComandaController abrirTelaDaComanda(Mesa mesa, Comanda comanda) throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/App/ComandaView.fxml"));
+        Parent root = loader.load();
+        ComandaController controller = loader.getController();
+        List<ItemVendavel> itensVendaveis = new ArrayList<>(this.persistenceService.carregarProdutos());
+        controller.carregarComanda(mesa, comanda, this.usuarioLogado, itensVendaveis);
+
+        Stage stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.setTitle("Editando " + comanda.toString());
+        stage.setScene(new Scene(root));
+        stage.setMaximized(true);
+        stage.showAndWait();
+        return controller;
     }
 
     @FXML
@@ -209,7 +272,7 @@ public class MesaController extends BaseController{
 
             ListaComandasController controller = loader.getController();
 
-            controller.inicializar(this.listaDeMesas, this.usuarioLogado, itensVendaveis);
+            controller.inicializar(this.listaDeMesas, this.usuarioLogado, this.comandasSemMesa, itensVendaveis);
 
             painelConteudo.setCenter(painelComandas);
             selecionarMenu(botaoComandas, "Comandas");

@@ -21,9 +21,20 @@ public class Mesa {
         return comandas;
     }
 
-    public void adicionarComanda(Comanda c){
-        if (c == null) throw new IllegalArgumentException("Comanda não pode ser nula");
+    public void adicionarComanda(Comanda c) {
+        if (c == null) {
+            throw new IllegalArgumentException("Comanda não pode ser nula");
+        }
+
+        if (temComandaAberta()) {
+            throw new IllegalStateException("A mesa já possui uma comanda aberta");
+        }
+
         this.comandas.add(c);
+        }
+
+    public boolean temComandaAberta() {
+        return this.comandas.stream().anyMatch(c -> !c.isFechada());
     }
 
     public void removerComanda(Comanda c){
@@ -45,7 +56,7 @@ public class Mesa {
 
     @Override
     public String toString() {
-        return String.format("Mesa %d - %s (%d comandas)", numMesa, isOcupada() ? "Ocupada" : "Livre", comandas.size());
+        return String.format("Mesa %d ", numMesa);
     }
 
 }

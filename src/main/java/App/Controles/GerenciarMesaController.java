@@ -15,7 +15,6 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 public class GerenciarMesaController extends BaseController {
 
@@ -28,30 +27,58 @@ public class GerenciarMesaController extends BaseController {
     private Mesa mesa;
     private Usuario atendente;
     private List<ItemVendavel> produtosDisponiveis;
+    private List<Comanda> comandasSemMesa;
 
-    public void inicializar(Mesa mesa, Usuario atendente, List<ItemVendavel> itens) {
-        this.mesa = mesa;
-        this.atendente = atendente;
-        this.produtosDisponiveis = itens;
-        labelTituloMesa.setText("Gerenciando Mesa " + mesa.getNumMesa());
-        atualizarListaComandas();
-        this.listaComandas.getSelectionModel().selectedItemProperty().addListener(
-                (observable, oldValue, newValue) -> atualizarVisibilidadeBotoes(newValue)
-        );
-        atualizarVisibilidadeBotoes(null);
-    }
+    public void inicializar(
+        Mesa mesa,
+        Usuario atendente,
+        List<Comanda> comandasSemMesa,
+        List<ItemVendavel> itens
+) {
+
+    this.mesa = mesa;
+    this.atendente = atendente;
+    this.produtosDisponiveis = itens;
+    this.comandasSemMesa = comandasSemMesa;
+
+    labelTituloMesa.setText(
+            "Gerenciando Mesa " + mesa.getNumMesa()
+    );
+
+    atualizarListaComandas();
+
+    this.listaComandas.getSelectionModel()
+            .selectedItemProperty()
+            .addListener(
+                    (observable, oldValue, newValue) ->
+                            atualizarVisibilidadeBotoes(newValue)
+            );
+
+    this.listaComandas.setOnMouseClicked(event -> {
+        if (event.getClickCount() == 2) {
+            abrirComanda();
+        }
+    });
+
+    atualizarVisibilidadeBotoes(null);
+}
 
     private void atualizarVisibilidadeBotoes(Comanda selecionada) {
-        if (selecionada == null) {
-            botaoAbrirComanda.setVisible(false);
-            boxBotoesFechada.setVisible(false);
-        } else if (selecionada.isFechada()) {
-            botaoAbrirComanda.setVisible(false);
-            boxBotoesFechada.setVisible(true);
-        } else {
-            botaoAbrirComanda.setVisible(true);
-            boxBotoesFechada.setVisible(false);
-        }
+
+        boolean mesaLivre =
+                mesa != null
+                && !mesa.isOcupada()
+                && !mesa.temComandaAberta();
+
+        botaoAbrirComanda.setVisible(mesaLivre);
+        botaoAbrirComanda.setManaged(mesaLivre);
+
+        boolean comandaFechada =
+                selecionada != null
+                && selecionada.isFechada();
+
+        boxBotoesFechada.setVisible(comandaFechada);
+        boxBotoesFechada.setManaged(comandaFechada);
     }
 
     private void atualizarListaComandas() {
@@ -78,7 +105,8 @@ public class GerenciarMesaController extends BaseController {
 
             Stage stage = new Stage();
             stage.setTitle("Pagamento Individual");
-            stage.setScene(new Scene(root));
+            stage.setScene(new Scene(root, 800, 700));
+            stage.setResizable(false);
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.showAndWait();
             if (pgtoController.isPagamentoRealizado()) {
@@ -102,20 +130,87 @@ public class GerenciarMesaController extends BaseController {
 
     @FXML
     private void adicionarNovaComanda() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Nova Comanda");
-        dialog.setHeaderText("Mesa " + mesa.getNumMesa());
-        dialog.setContentText("Nome do cliente:");
 
-        Optional<String> result = dialog.showAndWait();
-        if (result.isPresent() && !result.get().trim().isEmpty()){
-            Comanda novaComanda = new Comanda();
-            novaComanda.setClienteNome(result.get());
-            this.mesa.adicionarComanda(novaComanda);
+        if (mesa.isOcupada() || mesa.temComandaAberta()) {
 
-            atualizarListaComandas();
-            abrirComanda();
+            mostrarAlerta(
+                    "Mesa ocupada",
+                    "Esta mesa já possui uma comanda aberta."
+            );
 
+            atualizarVisibilidadeBotoes(null);
+            return;
+        }
+
+        try {
+
+            FXMLLoader loader =
+                    new FXMLLoader(
+                            getClass().getResource(
+                                    "/App/AbrirComandaView.fxml"
+                            )
+                    );
+
+            Parent root = loader.load();
+
+            AbrirComandaController dialogController =
+                    loader.getController();
+
+            dialogController.inicializar(
+                    List.of(mesa),
+                    mesa
+            );
+
+            Stage stage = new Stage();
+
+            stage.initModality(
+                    Modality.APPLICATION_MODAL
+            );
+
+            stage.setTitle("Abrir comanda");
+
+            stage.setScene(
+                    new Scene(root)
+            );
+
+            stage.setResizable(false);
+
+            stage.showAndWait();
+
+            if (dialogController.isConfirmada() && dialogController.getComandaCriada() != null) {
+
+                Comanda comandaCriada =
+                        dialogController.getComandaCriada();
+
+                Mesa mesaDaComanda =
+                        dialogController.getMesaSelecionada();
+
+                // Cliente sem mesa
+                if (mesaDaComanda == null) {
+
+                    if (comandasSemMesa != null) {
+                        comandasSemMesa.add(comandaCriada);
+                    }
+
+                } else {
+
+                    atualizarListaComandas();
+
+                    listaComandas
+                            .getSelectionModel()
+                            .select(comandaCriada);
+                }
+
+                abrirComanda();
+            }
+        }catch (IOException e) {
+
+            e.printStackTrace();
+
+            mostrarAlerta(
+                    "Erro",
+                    "Não foi possível abrir o diálogo de nova comanda."
+            );
         }
     }
 
