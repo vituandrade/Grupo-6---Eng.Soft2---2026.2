@@ -44,6 +44,8 @@ public class MesaController extends BaseController{
     private Button botaoMesas;
     @FXML
     private Button botaoComandas;
+    @FXML
+    private Button botaoEstoque;
 
 
     private Usuario usuarioLogado;
@@ -65,6 +67,8 @@ public class MesaController extends BaseController{
         if (usuario instanceof Interno) {
             botaoProdutos.setVisible(true);
             botaoProdutos.setManaged(true);
+            botaoEstoque.setVisible(true);
+            botaoEstoque.setManaged(true);
         }
 
         this.painelConteudo = (BorderPane) painelRaiz.getCenter();
@@ -239,6 +243,21 @@ public class MesaController extends BaseController{
         }
     }
 
+    @FXML
+    private void abrirEstoque() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/App/EstoqueView.fxml"));
+            Node painelEstoque = loader.load();
+            EstoqueController controller = loader.getController();
+            controller.inicializar(this.persistenceService);
+            painelConteudo.setCenter(painelEstoque);
+            selecionarMenu(botaoEstoque, "Estoque");
+        } catch (IOException | RuntimeException e) {
+            e.printStackTrace();
+            mostrarAlerta("Erro", "Não foi possível carregar a tela de estoque.");
+        }
+    }
+
     private void sincronizarMesasComConfig() {
         int numeroAtualNaLista = this.listaDeMesas.size();
         int numeroDesejadoDoConfig = this.config.getNumeroDeMesas();
@@ -285,7 +304,7 @@ public class MesaController extends BaseController{
 
     private void selecionarMenu(Button botaoSelecionado, String titulo) {
         labelTituloPagina.setText(titulo);
-        for (Button botao : List.of(botaoMesas, botaoComandas, botaoProdutos)) {
+        for (Button botao : List.of(botaoMesas, botaoComandas, botaoProdutos, botaoEstoque)) {
             botao.getStyleClass().remove("menu-button-active");
         }
         botaoSelecionado.getStyleClass().add("menu-button-active");

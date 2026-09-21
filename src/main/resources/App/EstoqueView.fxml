@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="18.0" styleClass="estoque-view" stylesheets="@Estoque.css"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="App.Controles.EstoqueController">
+    <padding>
+        <Insets bottom="30.0" left="34.0" right="34.0" top="26.0" />
+    </padding>
+
+    <HBox alignment="CENTER_LEFT">
+        <Label styleClass="section-title" text="Controle de estoque" />
+        <Region HBox.hgrow="ALWAYS" />
+        <Button fx:id="botaoMovimentacao" onAction="#abrirMovimentacao"
+                prefHeight="44.0" prefWidth="228.0" styleClass="primary-button"
+                text="+ MOVIMENTAÇÃO" />
+    </HBox>
+
+    <HBox spacing="20.0">
+        <TextField fx:id="campoBusca" prefHeight="42.0"
+                   promptText="Buscar por item..." styleClass="search-field"
+                   HBox.hgrow="ALWAYS" />
+        <ComboBox fx:id="filtroSituacao" prefHeight="42.0" prefWidth="260.0"
+                  styleClass="filter-combo" />
+    </HBox>
+
+    <TableView fx:id="tabelaEstoque" styleClass="estoque-table" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colunaItem" prefWidth="340.0" text="Item" />
+            <TableColumn fx:id="colunaUnidade" prefWidth="180.0" text="Unidade" />
+            <TableColumn fx:id="colunaQuantidade" prefWidth="220.0" text="Quantidade disponível" />
+            <TableColumn fx:id="colunaSituacao" prefWidth="220.0" text="Situação" />
+        </columns>
+    </TableView>
+
+    <Label fx:id="labelMensagem" minHeight="20.0" styleClass="page-message" />
+</VBox>

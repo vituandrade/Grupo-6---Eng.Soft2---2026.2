@@ -30,6 +30,8 @@
                         styleClass="menu-button, menu-button-active" text="Mesas" />
                 <Button fx:id="botaoComandas" maxWidth="Infinity" onAction="#abrirListaComandas"
                         styleClass="menu-button" text="Comandas" />
+                <Button fx:id="botaoEstoque" managed="false" maxWidth="Infinity" onAction="#abrirEstoque"
+                        styleClass="menu-button" text="Estoque" visible="false" />
             </VBox>
         </VBox>
     </left>
