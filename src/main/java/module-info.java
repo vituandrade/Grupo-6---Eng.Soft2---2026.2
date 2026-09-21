@@ -25,4 +25,5 @@ module restaurante.sistemagestaorestaurante {
     opens Model.Produtos.Alimentos to com.google.gson;
     opens Model.Produtos.Bedidas to com.google.gson;
     opens Model.Produtos.Outros to com.google.gson;
+    exports Model.Estoque;
 }

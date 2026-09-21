@@ -1,5 +1,7 @@
 package App.Persistencia;
 
+import Model.Estoque.ItemEstoque;
+import Model.Estoque.TipoMovimentacao;
 import Model.Produtos.ItemCardapio;
 import Model.Produtos.Produto;
 import Model.Produtos.Alimentos.Refeicao;
@@ -20,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,7 +52,11 @@ public class DatabaseService implements InterfacePersistencia {
     }
 
     private Connection conectar() throws SQLException {
-        return DriverManager.getConnection("jdbc:sqlite:" + caminhoBanco);
+        Connection conexao = DriverManager.getConnection("jdbc:sqlite:" + caminhoBanco);
+        try (Statement statement = conexao.createStatement()) {
+            statement.execute("PRAGMA foreign_keys = ON");
+        }
+        return conexao;
     }
 
     private void garantirDiretorio() {
@@ -89,11 +96,31 @@ public class DatabaseService implements InterfacePersistencia {
                     disponivel INTEGER NOT NULL DEFAULT 1
                 )
                 """;
+        String criarItensEstoque = """
+                CREATE TABLE IF NOT EXISTS itens_estoque (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    nome TEXT UNIQUE COLLATE NOCASE NOT NULL,
+                    unidade_medida TEXT NOT NULL,
+                    quantidade REAL NOT NULL DEFAULT 0 CHECK (quantidade >= 0)
+                )
+                """;
+        String criarMovimentacoes = """
+                CREATE TABLE IF NOT EXISTS movimentacoes_estoque (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    item_id INTEGER NOT NULL,
+                    tipo TEXT NOT NULL CHECK (tipo IN ('ENTRADA', 'SAIDA')),
+                    quantidade REAL NOT NULL CHECK (quantidade > 0),
+                    data_hora TEXT NOT NULL,
+                    FOREIGN KEY (item_id) REFERENCES itens_estoque(id)
+                )
+                """;
 
         try (Connection conexao = conectar(); Statement statement = conexao.createStatement()) {
             statement.execute(criarConfig);
             statement.execute(criarUsuarios);
             statement.execute(criarProdutos);
+            statement.execute(criarItensEstoque);
+            statement.execute(criarMovimentacoes);
             garantirColunaDisponibilidade(statement);
         } catch (SQLException e) {
             throw new PersistenciaException("Não foi possível inicializar o banco de dados.", e);
@@ -122,8 +149,35 @@ public class DatabaseService implements InterfacePersistencia {
             if (tabelaVazia(conexao, "produtos")) {
                 salvarProdutos(json.carregarProdutos());
             }
+            migrarEstoqueDosProdutosSeNecessario(conexao);
         } catch (SQLException e) {
             throw new PersistenciaException("Não foi possível migrar os dados antigos.", e);
+        }
+    }
+
+    private void migrarEstoqueDosProdutosSeNecessario(Connection conexao) throws SQLException {
+        if (!tabelaVazia(conexao, "itens_estoque")) {
+            return;
+        }
+
+        String migrarItens = """
+                INSERT OR IGNORE INTO itens_estoque (nome, unidade_medida, quantidade)
+                SELECT nome, 'un.', estoque
+                FROM produtos
+                WHERE tipo_classe <> 'servico'
+                """;
+        String registrarSaldosIniciais = """
+                INSERT INTO movimentacoes_estoque (item_id, tipo, quantidade, data_hora)
+                SELECT id, 'ENTRADA', quantidade, ?
+                FROM itens_estoque
+                WHERE quantidade > 0
+                """;
+
+        try (Statement statement = conexao.createStatement();
+             PreparedStatement movimentacoes = conexao.prepareStatement(registrarSaldosIniciais)) {
+            statement.executeUpdate(migrarItens);
+            movimentacoes.setString(1, LocalDateTime.now().toString());
+            movimentacoes.executeUpdate();
         }
     }
 
@@ -317,5 +371,151 @@ public class DatabaseService implements InterfacePersistencia {
         if (produto instanceof Servico) return "servico";
         if (produto instanceof Descartaveis) return "descartavel";
         throw new PersistenciaException("Tipo de produto não suportado.", null);
+    }
+
+    @Override
+    public List<ItemEstoque> carregarItensEstoque() {
+        List<ItemEstoque> itens = new ArrayList<>();
+        String sql = """
+                SELECT id, nome, unidade_medida, quantidade
+                FROM itens_estoque
+                ORDER BY nome
+                """;
+        try (Connection conexao = conectar();
+             PreparedStatement statement = conexao.prepareStatement(sql);
+             ResultSet resultado = statement.executeQuery()) {
+            while (resultado.next()) {
+                itens.add(new ItemEstoque(
+                        resultado.getInt("id"),
+                        resultado.getString("nome"),
+                        resultado.getString("unidade_medida"),
+                        resultado.getDouble("quantidade")
+                ));
+            }
+            return itens;
+        } catch (SQLException e) {
+            throw new PersistenciaException("Não foi possível carregar o estoque.", e);
+        }
+    }
+
+    @Override
+    public ItemEstoque registrarMovimentacaoEstoque(
+            Integer itemId,
+            String nomeNovoItem,
+            String unidadeMedida,
+            TipoMovimentacao tipo,
+            double quantidade
+    ) {
+        try (Connection conexao = conectar()) {
+            conexao.setAutoCommit(false);
+            try {
+                ItemEstoque atualizado = itemId == null
+                        ? criarItemEstoque(conexao, nomeNovoItem, unidadeMedida, tipo, quantidade)
+                        : movimentarItemExistente(conexao, itemId, tipo, quantidade);
+
+                registrarMovimentacao(conexao, atualizado.getId(), tipo, quantidade);
+                conexao.commit();
+                return atualizado;
+            } catch (SaldoInsuficienteException e) {
+                conexao.rollback();
+                throw e;
+            } catch (SQLException e) {
+                conexao.rollback();
+                throw e;
+            }
+        } catch (SaldoInsuficienteException e) {
+            throw e;
+        } catch (SQLException e) {
+            throw new PersistenciaException("Não foi possível registrar a movimentação.", e);
+        }
+    }
+
+    private ItemEstoque criarItemEstoque(
+            Connection conexao,
+            String nome,
+            String unidade,
+            TipoMovimentacao tipo,
+            double quantidade
+    ) throws SQLException {
+        if (tipo != TipoMovimentacao.ENTRADA) {
+            throw new SaldoInsuficienteException();
+        }
+
+        String sql = """
+                INSERT INTO itens_estoque (nome, unidade_medida, quantidade)
+                VALUES (?, ?, ?)
+                """;
+        try (PreparedStatement statement = conexao.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setString(1, nome);
+            statement.setString(2, unidade);
+            statement.setDouble(3, quantidade);
+            statement.executeUpdate();
+
+            try (ResultSet chaves = statement.getGeneratedKeys()) {
+                if (!chaves.next()) {
+                    throw new SQLException("O banco não retornou o item criado.");
+                }
+                return new ItemEstoque(chaves.getInt(1), nome, unidade, quantidade);
+            }
+        }
+    }
+
+    private ItemEstoque movimentarItemExistente(
+            Connection conexao,
+            int itemId,
+            TipoMovimentacao tipo,
+            double quantidade
+    ) throws SQLException {
+        String consulta = """
+                SELECT nome, unidade_medida, quantidade
+                FROM itens_estoque
+                WHERE id = ?
+                """;
+        try (PreparedStatement statement = conexao.prepareStatement(consulta)) {
+            statement.setInt(1, itemId);
+            try (ResultSet resultado = statement.executeQuery()) {
+                if (!resultado.next()) {
+                    throw new SQLException("Item de estoque não encontrado.");
+                }
+
+                String nome = resultado.getString("nome");
+                String unidade = resultado.getString("unidade_medida");
+                double saldoAtual = resultado.getDouble("quantidade");
+                double novoSaldo = tipo == TipoMovimentacao.ENTRADA
+                        ? saldoAtual + quantidade
+                        : saldoAtual - quantidade;
+
+                if (novoSaldo < 0) {
+                    throw new SaldoInsuficienteException();
+                }
+
+                try (PreparedStatement atualizar = conexao.prepareStatement(
+                        "UPDATE itens_estoque SET quantidade = ? WHERE id = ?")) {
+                    atualizar.setDouble(1, novoSaldo);
+                    atualizar.setInt(2, itemId);
+                    atualizar.executeUpdate();
+                }
+                return new ItemEstoque(itemId, nome, unidade, novoSaldo);
+            }
+        }
+    }
+
+    private void registrarMovimentacao(
+            Connection conexao,
+            int itemId,
+            TipoMovimentacao tipo,
+            double quantidade
+    ) throws SQLException {
+        String sql = """
+                INSERT INTO movimentacoes_estoque (item_id, tipo, quantidade, data_hora)
+                VALUES (?, ?, ?, ?)
+                """;
+        try (PreparedStatement statement = conexao.prepareStatement(sql)) {
+            statement.setInt(1, itemId);
+            statement.setString(2, tipo.name());
+            statement.setDouble(3, quantidade);
+            statement.setString(4, LocalDateTime.now().toString());
+            statement.executeUpdate();
+        }
     }
 }
