@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="App.Controles.CancelarItemController"
+            prefWidth="620.0"
+            prefHeight="320.0"
+            style="-fx-background-color: #F5F7F8;">
+
+    <top>
+        <VBox spacing="3"
+              style="-fx-background-color: white;">
+
+            <padding>
+                <Insets top="18"
+                        right="24"
+                        bottom="16"
+                        left="24"/>
+            </padding>
+
+            <Label text="Cancelar item"
+                   style="-fx-font-size: 20px;
+                          -fx-font-weight: bold;
+                          -fx-text-fill: #27343A;"/>
+
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="14"
+              alignment="CENTER_LEFT">
+
+            <padding>
+                <Insets top="22"
+                        right="24"
+                        bottom="10"
+                        left="24"/>
+            </padding>
+
+            <Label fx:id="labelDescricao"
+                   wrapText="true"
+                   maxWidth="570.0"
+                   style="-fx-font-size: 13px;
+                          -fx-text-fill: #34434A;"/>
+
+            <Label text="A comanda permanecerá aberta."
+                   style="-fx-font-size: 10px;
+                          -fx-text-fill: #7A8890;"/>
+
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox spacing="10"
+              alignment="CENTER_RIGHT">
+
+            <padding>
+                <Insets top="10"
+                        right="24"
+                        bottom="20"
+                        left="24"/>
+            </padding>
+
+            <Button text="VOLTAR"
+                    onAction="#voltar"
+                    prefWidth="82.0"
+                    prefHeight="34.0"
+                    style="-fx-background-color: white;
+                           -fx-text-fill: #34434A;
+                           -fx-border-color: #D5DEE2;
+                           -fx-border-radius: 5;
+                           -fx-background-radius: 5;
+                           -fx-font-size: 10px;
+                           -fx-font-weight: bold;"/>
+
+            <Button text="CANCELAR ITEM"
+                    onAction="#confirmar"
+                    prefWidth="110.0"
+                    prefHeight="34.0"
+                    style="-fx-background-color: #C94440;
+                           -fx-text-fill: white;
+                           -fx-border-radius: 5;
+                           -fx-background-radius: 5;
+                           -fx-font-size: 10px;
+                           -fx-font-weight: bold;"/>
+
+        </HBox>
+    </bottom>
+
+</BorderPane>

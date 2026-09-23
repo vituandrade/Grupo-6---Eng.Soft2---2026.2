@@ -2,6 +2,7 @@ package App.Controles;
 
 import Model.Atendimento.Comanda;
 import Model.Atendimento.Mesa;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -11,25 +12,39 @@ import javafx.stage.Stage;
 
 import java.util.List;
 
-/**
- * Controla o diálogo de abertura de uma nova comanda (UC04).
- */
 public class AbrirComandaController extends BaseController {
 
-    @FXML private ComboBox<String> comboTipoAtendimento;
-    @FXML private ComboBox<Mesa> comboMesa;
-    @FXML private TextField campoNomeCliente;
-    @FXML private Label labelMesa;
-    @FXML private Label labelNomeCliente;
-    @FXML private Label labelErro;
-    @FXML private Button botaoAbrir;
+    @FXML
+    private ComboBox<String> comboTipoAtendimento;
+
+    @FXML
+    private ComboBox<Mesa> comboMesa;
+
+    @FXML
+    private TextField campoNomeCliente;
+
+    @FXML
+    private Label labelMesa;
+
+    @FXML
+    private Label labelNomeCliente;
+
+    @FXML
+    private Label labelErro;
+
+    @FXML
+    private Button botaoAbrir;
 
     private List<Mesa> mesas;
+
     private Comanda comandaCriada;
+
     private Mesa mesaSelecionada;
+
     private boolean confirmada;
 
     public void inicializar(List<Mesa> mesas) {
+
         this.mesas = mesas;
         this.confirmada = false;
         this.comandaCriada = null;
@@ -40,7 +55,10 @@ public class AbrirComandaController extends BaseController {
                 "Cliente sem mesa"
         );
 
-        comboTipoAtendimento.getSelectionModel().select("Mesa");
+        // Quando abrir pelo botão "+ COMANDA SEM MESA",
+        // já começa selecionado como cliente sem mesa.
+        comboTipoAtendimento.getSelectionModel()
+                .select("Cliente sem mesa");
 
         comboTipoAtendimento.valueProperty().addListener(
                 (obs, antigo, novo) -> atualizarCampos()
@@ -51,14 +69,23 @@ public class AbrirComandaController extends BaseController {
     }
 
     public void inicializar(List<Mesa> mesas, Mesa mesaPreSelecionada) {
+
         inicializar(mesas);
 
+        // Quando a tela foi aberta a partir de uma mesa,
+        // o atendimento deve começar como "Mesa".
         if (mesaPreSelecionada != null && !mesaPreSelecionada.isOcupada()) {
-            comboMesa.getSelectionModel().select(mesaPreSelecionada);
+
+            comboTipoAtendimento.getSelectionModel()
+                    .select("Mesa");
+
+            comboMesa.getSelectionModel()
+                    .select(mesaPreSelecionada);
         }
     }
 
     private void atualizarMesasLivres() {
+
         comboMesa.getItems().clear();
 
         if (mesas == null) {
@@ -66,6 +93,7 @@ public class AbrirComandaController extends BaseController {
         }
 
         for (Mesa mesa : mesas) {
+
             if (!mesa.isOcupada() && !mesa.temComandaAberta()) {
                 comboMesa.getItems().add(mesa);
             }
@@ -87,18 +115,37 @@ public class AbrirComandaController extends BaseController {
         comboMesa.setVisible(porMesa);
         comboMesa.setManaged(porMesa);
 
-
         labelNomeCliente.setVisible(true);
         labelNomeCliente.setManaged(true);
 
         campoNomeCliente.setVisible(true);
         campoNomeCliente.setManaged(true);
 
+        if (porMesa) {
+
+            labelNomeCliente.setText("Nome do cliente");
+
+            campoNomeCliente.setPromptText(
+                    "Opcional para atendimento em mesa"
+            );
+
+        } else {
+
+            labelNomeCliente.setText(
+                    "Nome do cliente *"
+            );
+
+            campoNomeCliente.setPromptText(
+                    "Obrigatório para Cliente sem mesa"
+            );
+        }
+
         limparErro();
-}
+    }
 
     @FXML
     private void confirmar() {
+
         limparErro();
 
         if ("Mesa".equals(comboTipoAtendimento.getValue())) {
@@ -107,15 +154,19 @@ public class AbrirComandaController extends BaseController {
                     comboMesa.getSelectionModel().getSelectedItem();
 
             if (mesa == null) {
+
                 atualizarMesasLivres();
+
                 mostrarErro(
                         "Não há mesas livres disponíveis para abrir a comanda."
                 );
+
                 return;
             }
 
             // Revalidação antes da criação.
             if (mesa.isOcupada() || mesa.temComandaAberta()) {
+
                 atualizarMesasLivres();
 
                 mostrarErro(
@@ -141,9 +192,11 @@ public class AbrirComandaController extends BaseController {
             }
 
             try {
+
                 mesa.adicionarComanda(comandaCriada);
 
             } catch (IllegalStateException ex) {
+
                 comandaCriada = null;
 
                 mostrarErro(
@@ -151,6 +204,7 @@ public class AbrirComandaController extends BaseController {
                 );
 
                 atualizarMesasLivres();
+
                 return;
             }
 
@@ -164,42 +218,55 @@ public class AbrirComandaController extends BaseController {
                             : campoNomeCliente.getText().trim();
 
             if (nome.isEmpty()) {
-                mostrarErro("Informe o nome do cliente.");
+
+                mostrarErro(
+                        "Informe o nome do cliente."
+                );
+
                 campoNomeCliente.requestFocus();
+
                 return;
             }
 
             comandaCriada = new Comanda();
+
             comandaCriada.setClienteNome(nome);
 
+            // Cliente sem mesa.
             mesaSelecionada = null;
         }
 
         confirmada = true;
+
         fechar();
     }
 
     @FXML
     private void cancelar() {
+
         confirmada = false;
         comandaCriada = null;
         mesaSelecionada = null;
+
         fechar();
     }
 
     private void mostrarErro(String mensagem) {
+
         labelErro.setText(mensagem);
         labelErro.setVisible(true);
         labelErro.setManaged(true);
     }
 
     private void limparErro() {
+
         labelErro.setText("");
         labelErro.setVisible(false);
         labelErro.setManaged(false);
     }
 
     private void fechar() {
+
         Stage stage =
                 (Stage) botaoAbrir.getScene().getWindow();
 

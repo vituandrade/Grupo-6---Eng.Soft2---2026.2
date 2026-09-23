@@ -4,43 +4,46 @@ import Model.Atendimento.Comanda;
 import Model.Atendimento.Mesa;
 import Model.Produtos.ItemVendavel;
 import Model.Usuarios.Usuario;
+
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.scene.control.Button;
 
 import java.io.IOException;
 import java.util.List;
 
 public class ListaComandasController extends BaseController {
 
-    @FXML private TextField campoPesquisa;
-    @FXML private TilePane painelComandas;
+    @FXML
+    private TextField campoPesquisa;
+
+    @FXML
+    private TilePane painelComandas;
 
     private List<Mesa> todasAsMesas;
     private List<Comanda> comandasSemMesa;
     private Usuario usuarioLogado;
     private List<ItemVendavel> produtosDisponiveis;
+    private MesaController navegador;
 
     public void inicializar(
-        List<Mesa> mesas,
-        Usuario usuario,
-        List<Comanda> comandasSemMesa,
-        List<ItemVendavel> produtos
+            List<Mesa> mesas,
+            Usuario usuario,
+            List<Comanda> comandasSemMesa,
+            List<ItemVendavel> produtos,
+            MesaController navegador
     ) {
+
         this.todasAsMesas = mesas;
         this.usuarioLogado = usuario;
         this.comandasSemMesa = comandasSemMesa;
         this.produtosDisponiveis = produtos;
+        this.navegador = navegador;
 
         atualizarVisual();
 
@@ -48,6 +51,7 @@ public class ListaComandasController extends BaseController {
                 (obs, oldVal, newVal) -> atualizarVisual()
         );
     }
+
     @FXML
     private void atualizarVisual() {
 
@@ -60,10 +64,13 @@ public class ListaComandasController extends BaseController {
                                 .toLowerCase()
                                 .trim();
 
-        // Comandas vinculadas a mesas
         for (Mesa m : todasAsMesas) {
 
             for (Comanda c : m.getComandas()) {
+
+                if (c.isFechada()) {
+                    continue;
+                }
 
                 boolean matchCliente =
                         c.getClienteNome()
@@ -88,10 +95,13 @@ public class ListaComandasController extends BaseController {
             }
         }
 
-        // Comandas sem mesa
         if (comandasSemMesa != null) {
 
             for (Comanda c : comandasSemMesa) {
+
+                if (c.isFechada()) {
+                    continue;
+                }
 
                 boolean matchCliente =
                         c.getClienteNome()
@@ -116,10 +126,16 @@ public class ListaComandasController extends BaseController {
             }
         }
     }
-    private VBox criarCardComanda(Comanda c, Mesa m) {
+
+    private VBox criarCardComanda(
+            Comanda c,
+            Mesa m
+    ) {
+
         VBox card = new VBox(8);
+
         card.setPrefWidth(200);
-        card.setPrefHeight(150);
+        card.setPrefHeight(190);
 
         String corBorda =
                 c.isFechada()
@@ -136,47 +152,61 @@ public class ListaComandasController extends BaseController {
                 "-fx-border-radius: 8;"
         );
 
-        Label lblMesa = new Label(
-                m == null
-                        ? "Cliente sem mesa"
-                        : "Mesa " + m.getNumMesa()
-        );
+        Label lblMesa =
+                new Label(
+                        m == null
+                                ? "Cliente sem mesa"
+                                : "Mesa " + m.getNumMesa()
+                );
 
         lblMesa.setStyle(
                 "-fx-font-weight: bold;" +
                 "-fx-font-size: 14px;"
         );
 
-        Label lblStatus = new Label(
-                c.isFechada()
-                        ? "FECHADA"
-                        : "ABERTA"
-        );
+        Label lblStatus =
+                new Label(
+                        c.isFechada()
+                                ? "FECHADA"
+                                : "ABERTA"
+                );
 
         String styleStatus =
                 c.isFechada()
                         ? "-fx-text-fill: #ffc107;" +
-                        "-fx-font-size: 10px;" +
-                        "-fx-font-weight: bold;"
+                          "-fx-font-size: 10px;" +
+                          "-fx-font-weight: bold;"
                         : "-fx-text-fill: #28a745;" +
-                        "-fx-font-size: 10px;" +
-                        "-fx-font-weight: bold;";
+                          "-fx-font-size: 10px;" +
+                          "-fx-font-weight: bold;";
 
-        lblStatus.setStyle(styleStatus);
+        lblStatus.setStyle(
+                styleStatus
+        );
 
         HBox containerTopo =
-                new HBox(10, lblMesa, lblStatus);
+                new HBox(
+                        10,
+                        lblMesa,
+                        lblStatus
+                );
 
-        containerTopo.setAlignment(Pos.CENTER_LEFT);
+        containerTopo.setAlignment(
+                Pos.CENTER_LEFT
+        );
 
         Label lblCliente =
-                new Label(c.getClienteNome());
+                new Label(
+                        c.getClienteNome()
+                );
 
         lblCliente.setStyle(
                 "-fx-font-size: 16px;"
         );
 
-        lblCliente.setWrapText(true);
+        lblCliente.setWrapText(
+                true
+        );
 
         Label lblTotal =
                 new Label(
@@ -198,29 +228,31 @@ public class ListaComandasController extends BaseController {
                 lblTotal
         );
 
-        // Botão de pagamento aparece somente
-        // quando a comanda está fechada.
-        if (c.isFechada()) {
+        if (!c.isFechada()) {
 
-            Button botaoPagamento =
-                    new Button("Pagar");
+            Button botaoPagar =
+                    new Button("PAGAR");
 
-            botaoPagamento.setMaxWidth(
+            botaoPagar.setMaxWidth(
                     Double.MAX_VALUE
             );
 
-            botaoPagamento.setStyle(
+            botaoPagar.setStyle(
                     "-fx-background-color: #28a745;" +
                     "-fx-text-fill: white;" +
                     "-fx-font-weight: bold;"
             );
 
-            botaoPagamento.setOnAction(
+            botaoPagar.setOnAction(
                     e -> pagarComanda(c, m)
             );
 
+            botaoPagar.setOnMouseClicked(
+                    e -> e.consume()
+            );
+
             card.getChildren().add(
-                    botaoPagamento
+                    botaoPagar
             );
         }
 
@@ -240,100 +272,62 @@ public class ListaComandasController extends BaseController {
                 )
         );
 
- 
         card.setOnMouseClicked(e -> {
-
-            if (!(e.getTarget() instanceof Button)) {
-                abrirComandaEspecifica(c, m);
-            }
+            abrirComandaEspecifica(
+                    c,
+                    m
+            );
         });
 
         return card;
     }
 
-    private void pagarComanda(Comanda comanda, Mesa mesaDaComanda) {
-        if (comanda == null || !comanda.isFechada()) {
+    private void pagarComanda(
+            Comanda comanda,
+            Mesa mesaDaComanda
+    ) {
+
+        if (comanda == null || comanda.isFechada()) {
+
             mostrarAlerta(
                     "Erro",
-                    "A comanda precisa estar fechada para realizar o pagamento."
+                    "A comanda já está fechada."
             );
+
             return;
         }
 
-        try {
+        if (navegador != null) {
 
-            FXMLLoader loader =
-                    new FXMLLoader(
-                            getClass().getResource(
-                                    "/App/PagamentoView.fxml"
-                            )
-                    );
-
-            Parent root = loader.load();
-
-            PagamentoController pagamentoController =
-                    loader.getController();
-
-            pagamentoController.inicializar(comanda);
-
-            Stage stage = new Stage();
-
-            stage.setTitle("Pagamento");
-            stage.setScene(new Scene(root));
-            stage.initModality(
-                    Modality.APPLICATION_MODAL
-            );
-
-            stage.showAndWait();
-
-            if (pagamentoController.isPagamentoRealizado()) {
-
-                if (mesaDaComanda != null) {
-
-                    mesaDaComanda
-                            .getComandas()
-                            .remove(comanda);
-                }
-
-                if (mesaDaComanda == null
-                        && comandasSemMesa != null) {
-
-                    comandasSemMesa.remove(comanda);
-                }
-
-                atualizarVisual();
-            }
-
-        } catch (IOException e) {
-
-            e.printStackTrace();
-
-            mostrarAlerta(
-                    "Erro",
-                    "Não foi possível abrir a tela de pagamento."
+            navegador.abrirFechamento(
+                    comanda
             );
         }
     }
 
-    private void abrirComandaEspecifica(Comanda comanda, Mesa mesaDaComanda) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/App/ComandaView.fxml"));
-            Parent root = loader.load();
-            ComandaController controller = loader.getController();
+    private void abrirComandaEspecifica(
+            Comanda comanda,
+            Mesa mesaDaComanda
+    ) {
 
-            controller.carregarComanda(mesaDaComanda, comanda, this.usuarioLogado, this.produtosDisponiveis);
+        if (navegador != null) {
 
-            Stage stage = new Stage();
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setTitle("Editando " + comanda.toString());
-            stage.setScene(new Scene(root));
-            stage.setMaximized(true);
-            stage.showAndWait();
-            atualizarVisual();
+            try {
 
-        } catch (IOException e) {
-            e.printStackTrace();
-            mostrarAlerta("Erro", "Falha ao abrir comanda.");
+                navegador.abrirTelaDaComanda(
+                        mesaDaComanda,
+                        comanda
+                );
+
+            } catch (IOException e) {
+
+                e.printStackTrace();
+
+                mostrarAlerta(
+                        "Erro",
+                        "Não foi possível abrir a comanda."
+                );
+            }
         }
     }
 }

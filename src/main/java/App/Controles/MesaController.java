@@ -1,6 +1,7 @@
 package App.Controles;
 
 import App.Persistencia.InterfacePersistencia;
+
 import Model.Atendimento.Mesa;
 import Model.Atendimento.Comanda;
 import Model.Produtos.ItemVendavel;
@@ -26,37 +27,52 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MesaController extends BaseController{
+public class MesaController extends BaseController {
 
     @FXML
     private BorderPane painelRaiz;
+
     private Node centroOriginalMesas;
+    private Node barraSuperiorOriginal;
     private BorderPane painelConteudo;
+
     @FXML
     private Label labelUsuario;
+
     @FXML
     private Label labelTituloPagina;
+
     @FXML
     private TilePane painelMesas;
+
     @FXML
     private Button botaoProdutos;
+
     @FXML
     private Button botaoMesas;
+
     @FXML
     private Button botaoComandas;
+
     @FXML
     private Button botaoEstoque;
 
+    @FXML
+    private Button botaoNovaComanda;
 
     private Usuario usuarioLogado;
     private List<Mesa> listaDeMesas = new ArrayList<>();
     private List<Produto> listaDeProdutos;
     private final List<Comanda> comandasSemMesa = new ArrayList<>();
-
     private Config config;
     private InterfacePersistencia persistenceService;
 
-    public void setUsuarioLogado(Usuario usuario, List<Produto> produtos, Config config, InterfacePersistencia service) {
+    public void setUsuarioLogado(
+            Usuario usuario,
+            List<Produto> produtos,
+            Config config,
+            InterfacePersistencia service
+    ) {
         this.usuarioLogado = usuario;
         this.listaDeProdutos = produtos;
         this.config = config;
@@ -71,8 +87,16 @@ public class MesaController extends BaseController{
             botaoEstoque.setManaged(true);
         }
 
-        this.painelConteudo = (BorderPane) painelRaiz.getCenter();
-        this.centroOriginalMesas = painelConteudo.getCenter();
+        this.painelConteudo =
+                (BorderPane) painelRaiz.getCenter();
+
+        this.centroOriginalMesas =
+                painelConteudo.getCenter();
+
+        this.barraSuperiorOriginal =
+                painelConteudo.getTop();
+
+        restaurarBarraSuperior();
         carregarMesas();
     }
 
@@ -80,82 +104,173 @@ public class MesaController extends BaseController{
         painelMesas.getChildren().clear();
         this.listaDeMesas.clear();
 
-        int numeroTotalDeMesas = this.config.getNumeroDeMesas();
+        int numeroTotalDeMesas =
+                this.config.getNumeroDeMesas();
+
         for (int i = 1; i <= numeroTotalDeMesas; i++) {
             Mesa novaMesa = new Mesa(i);
+
             this.listaDeMesas.add(novaMesa);
-            VBox mesaBox = criarMesaVisual(novaMesa);
+
+            VBox mesaBox =
+                    criarMesaVisual(novaMesa);
+
             painelMesas.getChildren().add(mesaBox);
         }
     }
 
     private void atualizarVisualDasMesas() {
         painelMesas.getChildren().clear();
+
         for (Mesa mesa : this.listaDeMesas) {
-            VBox mesaBox = criarMesaVisual(mesa);
+            VBox mesaBox =
+                    criarMesaVisual(mesa);
+
             painelMesas.getChildren().add(mesaBox);
         }
     }
 
     private VBox criarMesaVisual(Mesa mesa) {
         VBox box = new VBox(10);
+
         String estiloFundo;
         String statusTexto;
+
         Button botaoAcao = new Button();
 
         if (mesa.isAguardandoPagamento()) {
-            estiloFundo = "-fx-background-color: #fff3cd;";
-            statusTexto = "Aguardando Pagamento";
+            estiloFundo =
+                    "-fx-background-color: #fff3cd;";
+
+            statusTexto =
+                    "Aguardando Pagamento";
+
             botaoAcao.setText("Gerenciar");
-            botaoAcao.setOnAction(e -> abrirMesaEspecifica(mesa.getNumMesa()));
+
+            botaoAcao.setOnAction(
+                    e -> abrirMesaEspecifica(
+                            mesa.getNumMesa()
+                    )
+            );
 
         } else if (mesa.isOcupada()) {
-            estiloFundo = "-fx-background-color: #f8d7da;";
-            statusTexto = "Ocupada (" + mesa.getComandas().size() + ")";
+            estiloFundo =
+                    "-fx-background-color: #f8d7da;";
+
+            statusTexto =
+                    "Ocupada (" +
+                    mesa.getComandas().size() +
+                    ")";
+
             botaoAcao.setText("Gerenciar");
-            botaoAcao.setOnAction(e -> abrirMesaEspecifica(mesa.getNumMesa()));
+
+            botaoAcao.setOnAction(
+                    e -> abrirMesaEspecifica(
+                            mesa.getNumMesa()
+                    )
+            );
 
         } else {
-            estiloFundo = "-fx-background-color: #d4edda;";
-            statusTexto = "Livre";
+            estiloFundo =
+                    "-fx-background-color: #d4edda;";
+
+            statusTexto =
+                    "Livre";
+
             botaoAcao.setText("Abrir Mesa");
-            botaoAcao.setOnAction(e -> abrirMesaEspecifica(mesa.getNumMesa()));
+
+            botaoAcao.setOnAction(
+                    e -> abrirMesaEspecifica(
+                            mesa.getNumMesa()
+                    )
+            );
         }
 
-        box.setStyle("-fx-border-color: #666; -fx-border-radius: 5; -fx-padding: 10; " + estiloFundo);
-        box.setPrefSize(120, 100);
+        box.setStyle(
+                "-fx-border-color: #666;" +
+                "-fx-border-radius: 5;" +
+                "-fx-padding: 10;" +
+                estiloFundo
+        );
 
-        Label label = new Label("Mesa " + mesa.getNumMesa());
-        label.setStyle("-fx-font-weight: bold;");
-        Label statusLabel = new Label(statusTexto);
+        box.setPrefSize(
+                120,
+                100
+        );
 
-        box.getChildren().addAll(label, statusLabel, botaoAcao);
+        Label label =
+                new Label(
+                        "Mesa " +
+                        mesa.getNumMesa()
+                );
+
+        label.setStyle(
+                "-fx-font-weight: bold;"
+        );
+
+        Label statusLabel =
+                new Label(
+                        statusTexto
+                );
+
+        box.getChildren().addAll(
+                label,
+                statusLabel,
+                botaoAcao
+        );
+
         return box;
     }
 
-    private void abrirMesaEspecifica(int numeroMesa) {
-        Mesa mesaSelecionada = this.listaDeMesas.get(numeroMesa - 1);
+    private void abrirMesaEspecifica(
+            int numeroMesa
+    ) {
+        Mesa mesaSelecionada =
+                this.listaDeMesas.get(
+                        numeroMesa - 1
+                );
+
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/App/GerenciarMesaView.fxml"));
-            Parent root = loader.load();
-            GerenciarMesaController controller = loader.getController();
+            FXMLLoader loader =
+                    new FXMLLoader(
+                            getClass().getResource(
+                                    "/App/GerenciarMesaView.fxml"
+                            )
+                    );
 
-            List<ItemVendavel> itensVendaveis = new ArrayList<>(this.persistenceService.carregarProdutos());
-            controller.inicializar(mesaSelecionada, this.usuarioLogado, this.comandasSemMesa, itensVendaveis);
+            Parent root =
+                    loader.load();
 
-            Stage gerenciarStage = new Stage();
-            gerenciarStage.initModality(Modality.APPLICATION_MODAL);
-            gerenciarStage.setTitle("Gerenciando Mesa " + numeroMesa);
-            gerenciarStage.setScene(new Scene(root));
+            GerenciarMesaController controller =
+                    loader.getController();
 
-            gerenciarStage.setResizable(false);
-            gerenciarStage.showAndWait();
+            List<ItemVendavel> itensVendaveis =
+                    new ArrayList<>(
+                            this.persistenceService.carregarProdutos()
+                    );
 
-            atualizarVisualDasMesas();
+            controller.inicializar(
+                    mesaSelecionada,
+                    this.usuarioLogado,
+                    this.comandasSemMesa,
+                    itensVendaveis,
+                    this
+            );
+
+            mostrarTelaCompleta(root);
+
+            selecionarMenu(
+                    botaoMesas,
+                    "Mesas"
+            );
 
         } catch (IOException e) {
             e.printStackTrace();
-            mostrarAlerta("Erro", "Não foi possível abrir o gerenciador da mesa.");
+
+            mostrarAlerta(
+                    "Erro",
+                    "Não foi possível abrir o gerenciador da mesa."
+            );
         }
     }
 
@@ -163,19 +278,48 @@ public class MesaController extends BaseController{
     private void abrirNovaComanda() {
         try {
             sincronizarMesasComConfig();
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/App/AbrirComandaView.fxml"));
-            Parent root = loader.load();
-            AbrirComandaController dialogController = loader.getController();
-            dialogController.inicializar(this.listaDeMesas);
 
-            Stage stage = new Stage();
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setTitle("Abrir comanda");
-            stage.setScene(new Scene(root, 800, 700));
+            FXMLLoader loader =
+                    new FXMLLoader(
+                            getClass().getResource(
+                                    "/App/AbrirComandaView.fxml"
+                            )
+                    );
+
+            Parent root =
+                    loader.load();
+
+            AbrirComandaController dialogController =
+                    loader.getController();
+
+            dialogController.inicializar(
+                    this.listaDeMesas
+            );
+
+            Stage stage =
+                    new Stage();
+
+            stage.initModality(
+                    Modality.APPLICATION_MODAL
+            );
+
+            stage.setTitle(
+                    "Abrir comanda"
+            );
+
+            stage.setScene(
+                    new Scene(
+                            root,
+                            800,
+                            700
+                    )
+            );
+
             stage.setResizable(false);
             stage.showAndWait();
 
-            if (dialogController.isConfirmada() && dialogController.getComandaCriada() != null) {
+            if (dialogController.isConfirmada()
+                    && dialogController.getComandaCriada() != null) {
 
                 Comanda comandaCriada =
                         dialogController.getComandaCriada();
@@ -183,131 +327,380 @@ public class MesaController extends BaseController{
                 Mesa mesaDaComanda =
                         dialogController.getMesaSelecionada();
 
-                // Se não houver mesa, guarda na lista de comandas sem mesa
                 if (mesaDaComanda == null) {
-                    comandasSemMesa.add(comandaCriada);
+                    comandasSemMesa.add(
+                            comandaCriada
+                    );
                 }
 
-                ComandaController comandaController =
-                        abrirTelaDaComanda(
-                                mesaDaComanda,
-                                comandaCriada
-                        );
+                abrirTelaDaComanda(
+                        mesaDaComanda,
+                        comandaCriada
+                );
 
-                if (comandaController != null) {
-                    atualizarVisualDasMesas();
-                }
+                atualizarVisualDasMesas();
             }
+
         } catch (IOException e) {
             e.printStackTrace();
-            mostrarAlerta("Erro", "Não foi possível abrir o diálogo de nova comanda.");
+
+            mostrarAlerta(
+                    "Erro",
+                    "Não foi possível abrir o diálogo de nova comanda."
+            );
         }
     }
 
-    private ComandaController abrirTelaDaComanda(Mesa mesa, Comanda comanda) throws IOException {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/App/ComandaView.fxml"));
-        Parent root = loader.load();
-        ComandaController controller = loader.getController();
-        List<ItemVendavel> itensVendaveis = new ArrayList<>(this.persistenceService.carregarProdutos());
-        controller.carregarComanda(mesa, comanda, this.usuarioLogado, itensVendaveis);
+    public ComandaController abrirTelaDaComanda(
+            Mesa mesa,
+            Comanda comanda
+    ) throws IOException {
 
-        Stage stage = new Stage();
-        stage.initModality(Modality.APPLICATION_MODAL);
-        stage.setTitle("Editando " + comanda.toString());
-        stage.setScene(new Scene(root));
-        stage.setMaximized(true);
-        stage.showAndWait();
+        FXMLLoader loader =
+                new FXMLLoader(
+                        getClass().getResource(
+                                "/App/ComandaView.fxml"
+                        )
+                );
+
+        Parent root =
+                loader.load();
+
+        ComandaController controller =
+                loader.getController();
+
+        controller.setNavegador(this);
+
+        List<ItemVendavel> itensVendaveis =
+                new ArrayList<>(
+                        this.persistenceService.carregarProdutos()
+                );
+
+        controller.carregarComanda(
+                mesa,
+                comanda,
+                this.usuarioLogado,
+                itensVendaveis
+        );
+
+        mostrarTelaCompleta(root);
+
+        selecionarMenu(
+                botaoComandas,
+                "Comandas"
+        );
+
         return controller;
+    }
+
+    public void abrirFechamento(
+            Comanda comanda
+    ) {
+        try {
+            FXMLLoader loader =
+                    new FXMLLoader(
+                            getClass().getResource(
+                                    "/App/FechamentoContaView.fxml"
+                            )
+                    );
+
+            Parent root =
+                    loader.load();
+
+            FechamentoContaController controller =
+                    loader.getController();
+
+            controller.inicializar(
+                    comanda,
+                    this.usuarioLogado,
+                    this,
+                    encontrarMesaDaComanda(comanda)
+            );
+
+            mostrarTelaCompleta(root);
+
+            selecionarMenu(
+                    botaoComandas,
+                    "Comandas"
+            );
+
+        } catch (IOException e) {
+            e.printStackTrace();
+
+            mostrarAlerta(
+                    "Erro",
+                    "Não foi possível abrir a tela de fechamento da conta."
+            );
+        }
+    }
+
+    private Mesa encontrarMesaDaComanda(
+            Comanda comanda
+    ) {
+        if (comanda == null) {
+            return null;
+        }
+
+        for (Mesa mesa : listaDeMesas) {
+            if (mesa.getComandas() != null
+                    && mesa.getComandas().contains(comanda)) {
+                return mesa;
+            }
+        }
+
+        return null;
     }
 
     @FXML
     private void abrirDashboardMesas() {
         sincronizarMesasComConfig();
-        painelConteudo.setCenter(this.centroOriginalMesas);
-        selecionarMenu(botaoMesas, "Mesas");
+
+        restaurarBarraSuperior();
+
+        painelConteudo.setCenter(
+                this.centroOriginalMesas
+        );
+
+        selecionarMenu(
+                botaoMesas,
+                "Mesas"
+        );
     }
 
     @FXML
     private void abrirProdutos() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/App/ProdutosView.fxml"));
-            Node painelProdutos = loader.load();
-            ProdutosController controller = loader.getController();
-            this.listaDeProdutos = persistenceService.carregarProdutos();
-            controller.inicializar(this.listaDeProdutos, this.persistenceService);
-            painelConteudo.setCenter(painelProdutos);
-            selecionarMenu(botaoProdutos, "Cardápio");
+            restaurarBarraSuperior();
+
+            FXMLLoader loader =
+                    new FXMLLoader(
+                            getClass().getResource(
+                                    "/App/ProdutosView.fxml"
+                            )
+                    );
+
+            Node painelProdutos =
+                    loader.load();
+
+            ProdutosController controller =
+                    loader.getController();
+
+            this.listaDeProdutos =
+                    persistenceService.carregarProdutos();
+
+            controller.inicializar(
+                    this.listaDeProdutos,
+                    this.persistenceService
+            );
+
+            painelConteudo.setCenter(
+                    painelProdutos
+            );
+
+            selecionarMenu(
+                    botaoProdutos,
+                    "Cardápio"
+            );
+
         } catch (IOException e) {
             e.printStackTrace();
-            mostrarAlerta("Erro", "Não foi possível carregar a tela de produtos.");
+
+            mostrarAlerta(
+                    "Erro",
+                    "Não foi possível carregar a tela de produtos."
+            );
         }
     }
 
     @FXML
     private void abrirEstoque() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/App/EstoqueView.fxml"));
-            Node painelEstoque = loader.load();
-            EstoqueController controller = loader.getController();
-            controller.inicializar(this.persistenceService);
-            painelConteudo.setCenter(painelEstoque);
-            selecionarMenu(botaoEstoque, "Estoque");
+            restaurarBarraSuperior();
+
+            FXMLLoader loader =
+                    new FXMLLoader(
+                            getClass().getResource(
+                                    "/App/EstoqueView.fxml"
+                            )
+                    );
+
+            Node painelEstoque =
+                    loader.load();
+
+            EstoqueController controller =
+                    loader.getController();
+
+            controller.inicializar(
+                    this.persistenceService
+            );
+
+            painelConteudo.setCenter(
+                    painelEstoque
+            );
+
+            selecionarMenu(
+                    botaoEstoque,
+                    "Estoque"
+            );
+
         } catch (IOException | RuntimeException e) {
             e.printStackTrace();
-            mostrarAlerta("Erro", "Não foi possível carregar a tela de estoque.");
+
+            mostrarAlerta(
+                    "Erro",
+                    "Não foi possível carregar a tela de estoque."
+            );
         }
     }
 
     private void sincronizarMesasComConfig() {
-        int numeroAtualNaLista = this.listaDeMesas.size();
-        int numeroDesejadoDoConfig = this.config.getNumeroDeMesas();
+        int numeroAtualNaLista =
+                this.listaDeMesas.size();
 
-        if (numeroAtualNaLista == numeroDesejadoDoConfig) {
+        int numeroDesejadoDoConfig =
+                this.config.getNumeroDeMesas();
+
+        if (numeroAtualNaLista ==
+                numeroDesejadoDoConfig) {
+
             atualizarVisualDasMesas();
             return;
         }
 
-        if (numeroDesejadoDoConfig > numeroAtualNaLista) {
-            for (int i = numeroAtualNaLista + 1; i <= numeroDesejadoDoConfig; i++) {
-                Mesa novaMesa = new Mesa(i);
-                this.listaDeMesas.add(novaMesa);
+        if (numeroDesejadoDoConfig >
+                numeroAtualNaLista) {
+
+            for (
+                    int i = numeroAtualNaLista + 1;
+                    i <= numeroDesejadoDoConfig;
+                    i++
+            ) {
+                Mesa novaMesa =
+                        new Mesa(i);
+
+                this.listaDeMesas.add(
+                        novaMesa
+                );
             }
+
         } else {
-            this.listaDeMesas.removeIf(mesa -> mesa.getNumMesa() > numeroDesejadoDoConfig);
+
+            this.listaDeMesas.removeIf(
+                    mesa ->
+                            mesa.getNumMesa() >
+                            numeroDesejadoDoConfig
+            );
         }
+
         atualizarVisualDasMesas();
     }
+
     @FXML
-    private void abrirListaComandas() {
+    public void abrirListaComandas() {
         try {
             sincronizarMesasComConfig();
+            restaurarBarraSuperior();
+
             if (this.listaDeProdutos == null) {
-                this.listaDeProdutos = persistenceService.carregarProdutos();
+                this.listaDeProdutos =
+                        persistenceService.carregarProdutos();
             }
-            List<ItemVendavel> itensVendaveis = new ArrayList<>(this.listaDeProdutos);
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/App/ListaComandas.fxml"));
-            Node painelComandas = loader.load();
+            List<ItemVendavel> itensVendaveis =
+                    new ArrayList<>(
+                            this.listaDeProdutos
+                    );
 
-            ListaComandasController controller = loader.getController();
+            FXMLLoader loader =
+                    new FXMLLoader(
+                            getClass().getResource(
+                                    "/App/ListaComandas.fxml"
+                            )
+                    );
 
-            controller.inicializar(this.listaDeMesas, this.usuarioLogado, this.comandasSemMesa, itensVendaveis);
+            Node painelComandas =
+                    loader.load();
 
-            painelConteudo.setCenter(painelComandas);
-            selecionarMenu(botaoComandas, "Comandas");
+            ListaComandasController controller =
+                    loader.getController();
+
+            controller.inicializar(
+                    this.listaDeMesas,
+                    this.usuarioLogado,
+                    this.comandasSemMesa,
+                    itensVendaveis,
+                    this
+            );
+
+            painelConteudo.setCenter(
+                    painelComandas
+            );
+
+            selecionarMenu(
+                    botaoComandas,
+                    "Comandas"
+            );
 
         } catch (IOException e) {
             e.printStackTrace();
-            mostrarAlerta("Erro", "Não foi possível abrir a lista de comandas.");
+
+            mostrarAlerta(
+                    "Erro",
+                    "Não foi possível abrir a lista de comandas."
+            );
         }
     }
 
-    private void selecionarMenu(Button botaoSelecionado, String titulo) {
-        labelTituloPagina.setText(titulo);
-        for (Button botao : List.of(botaoMesas, botaoComandas, botaoProdutos, botaoEstoque)) {
-            botao.getStyleClass().remove("menu-button-active");
-        }
-        botaoSelecionado.getStyleClass().add("menu-button-active");
+    private void mostrarTelaCompleta(
+            Node tela
+    ) {
+        painelConteudo.setTop(null);
+
+        painelConteudo.setCenter(
+                tela
+        );
     }
 
+    private void restaurarBarraSuperior() {
+        painelConteudo.setTop(
+                barraSuperiorOriginal
+        );
+
+        botaoNovaComanda.setVisible(
+                true
+        );
+
+        botaoNovaComanda.setManaged(
+                true
+        );
+    }
+
+    private void selecionarMenu(
+            Button botaoSelecionado,
+            String titulo
+    ) {
+        labelTituloPagina.setText(
+                titulo
+        );
+
+        for (
+                Button botao :
+                List.of(
+                        botaoMesas,
+                        botaoComandas,
+                        botaoProdutos,
+                        botaoEstoque
+                )
+        ) {
+            botao.getStyleClass().remove(
+                    "menu-button-active"
+            );
+        }
+
+        botaoSelecionado
+                .getStyleClass()
+                .add(
+                        "menu-button-active"
+                );
+    }
 }

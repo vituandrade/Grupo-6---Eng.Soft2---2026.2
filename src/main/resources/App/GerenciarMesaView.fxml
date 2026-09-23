@@ -15,7 +15,7 @@
             prefHeight="650.0"
             style="-fx-background-color: #F5F7F8;">
 
-    <!-- Cabeçalho -->
+    <!-- CABEÇALHO -->
     <top>
         <VBox spacing="5"
               style="-fx-background-color: #0F2833;">
@@ -33,7 +33,7 @@
                           -fx-font-size: 25px;
                           -fx-font-weight: bold;"/>
 
-            <Label text="Comandas vinculadas a esta mesa"
+            <Label text="Comanda aberta vinculada a esta mesa"
                    style="-fx-text-fill: #C8D2D6;
                           -fx-font-size: 14px;"/>
 
@@ -41,7 +41,7 @@
     </top>
 
 
-    <!-- Conteúdo -->
+    <!-- CONTEÚDO -->
     <center>
         <VBox spacing="12">
 
@@ -52,7 +52,7 @@
                         left="28"/>
             </padding>
 
-            <Label text="Comandas"
+            <Label text="Comanda em atendimento"
                    style="-fx-text-fill: #23343B;
                           -fx-font-size: 17px;
                           -fx-font-weight: bold;"/>
@@ -70,9 +70,10 @@
     </center>
 
 
-    <!-- Rodapé -->
+    <!-- RODAPÉ -->
     <bottom>
-        <VBox spacing="10">
+        <HBox spacing="12"
+              alignment="CENTER_RIGHT">
 
             <padding>
                 <Insets top="10"
@@ -81,39 +82,33 @@
                         left="28"/>
             </padding>
 
-            <!-- Botões para comanda fechada -->
-            <HBox fx:id="boxBotoesFechada"
-                  spacing="10"
-                  alignment="CENTER_RIGHT"
-                  visible="false"
-                  managed="false">
+            <!-- PAGAR -->
+            <Button fx:id="botaoPagar"
+                    text="PAGAR"
+                    onAction="#pagarComandaSelecionada"
+                    visible="false"
+                    managed="false"
+                    prefWidth="140"
+                    prefHeight="48"
+                    style="-fx-background-color: #28A745;
+                           -fx-text-fill: white;
+                           -fx-background-radius: 8;
+                           -fx-font-weight: bold;
+                           -fx-font-size: 14px;"/>
 
-                <Button text="PAGAR"
-                        onAction="#pagarComandaSelecionada"
-                        prefWidth="120"
-                        prefHeight="42"
-                        style="-fx-background-color: #28A745;
-                               -fx-text-fill: white;
-                               -fx-background-radius: 7;
-                               -fx-font-weight: bold;
-                               -fx-font-size: 13px;"/>
-
-            </HBox>
-
-
-            <!-- Nova comanda -->
+            <!-- NOVA COMANDA -->
             <Button fx:id="botaoAbrirComanda"
                     text="+  NOVA COMANDA"
                     onAction="#adicionarNovaComanda"
+                    prefWidth="190"
                     prefHeight="48"
-                    maxWidth="Infinity"
                     style="-fx-background-color: #ED8E22;
                            -fx-text-fill: #18272D;
                            -fx-background-radius: 8;
                            -fx-font-weight: bold;
                            -fx-font-size: 14px;"/>
 
-        </VBox>
+        </HBox>
     </bottom>
 
 </BorderPane>
