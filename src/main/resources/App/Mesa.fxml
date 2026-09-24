@@ -44,6 +44,12 @@
             <VBox spacing="8.0"
                   styleClass="navigation">
 
+                <Button fx:id="botaoPainelInicial"
+                        maxWidth="Infinity"
+                        onAction="#abrirPainelInicial"
+                        styleClass="menu-button, menu-button-active"
+                        text="Painel inicial" />
+
                 <Button fx:id="botaoProdutos"
                         managed="false"
                         maxWidth="Infinity"
@@ -55,7 +61,7 @@
                 <Button fx:id="botaoMesas"
                         maxWidth="Infinity"
                         onAction="#abrirDashboardMesas"
-                        styleClass="menu-button, menu-button-active"
+                        styleClass="menu-button"
                         text="Mesas" />
 
                 <Button fx:id="botaoComandas"
@@ -99,15 +105,17 @@
                     <!-- TÍTULO -->
                     <Label fx:id="labelTituloPagina"
                            styleClass="page-title"
-                           text="Mesas" />
+                           text="Painel inicial" />
 
                     <!-- ESPAÇO ENTRE O TÍTULO E AS AÇÕES -->
                     <Region HBox.hgrow="ALWAYS" />
 
-                    <!-- COMANDA SEM MESA -->
+                    <!-- Esta ação aparece somente na área de comandas. -->
                     <Button fx:id="botaoNovaComanda"
+                            managed="false"
                             onAction="#abrirNovaComanda"
-                            text="+ COMANDA SEM MESA"
+                            text="+ ABRIR COMANDA"
+                            visible="false"
                             style="-fx-background-color: #F7941D;
                                    -fx-text-fill: white;
                                    -fx-font-weight: bold;

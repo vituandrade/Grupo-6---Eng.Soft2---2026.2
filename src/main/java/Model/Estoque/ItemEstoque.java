@@ -30,6 +30,10 @@ public class ItemEstoque {
         return quantidade;
     }
 
+    public boolean precisaReposicao() {
+        return quantidade <= 5;
+    }
+
     public String getSituacao() {
         if (quantidade <= 0) {
             return "Sem estoque";

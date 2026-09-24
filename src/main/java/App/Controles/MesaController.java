@@ -50,6 +50,9 @@ public class MesaController extends BaseController {
     private Button botaoProdutos;
 
     @FXML
+    private Button botaoPainelInicial;
+
+    @FXML
     private Button botaoMesas;
 
     @FXML
@@ -104,6 +107,7 @@ public class MesaController extends BaseController {
         carregarMesas();
         carregarComandasPersistidas();
         atualizarVisualDasMesas();
+        abrirPainelInicial();
     }
 
     private void carregarComandasPersistidas() {
@@ -300,7 +304,7 @@ public class MesaController extends BaseController {
     }
 
     @FXML
-    private void abrirNovaComanda() {
+    public void abrirNovaComanda() {
         try {
             sincronizarMesasComConfig();
 
@@ -537,6 +541,33 @@ public class MesaController extends BaseController {
     }
 
     @FXML
+    public void abrirPainelInicial() {
+        try {
+            restaurarBarraSuperior();
+
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/App/PainelInicialView.fxml")
+            );
+            Node painelInicial = loader.load();
+
+            PainelInicialController controller = loader.getController();
+            controller.inicializar(
+                    this.listaDeMesas,
+                    this.comandasSemMesa,
+                    this.persistenceService,
+                    this.usuarioLogado,
+                    this
+            );
+
+            painelConteudo.setCenter(painelInicial);
+            selecionarMenu(botaoPainelInicial, "Painel inicial");
+        } catch (IOException | RuntimeException e) {
+            e.printStackTrace();
+            mostrarAlerta("Erro", "Não foi possível carregar o painel inicial.");
+        }
+    }
+
+    @FXML
     private void abrirProdutos() {
         try {
             restaurarBarraSuperior();
@@ -603,7 +634,12 @@ public class MesaController extends BaseController {
     }
 
     @FXML
-    private void abrirEstoque() {
+    public void abrirEstoque() {
+        if (usuarioLogado == null || !usuarioLogado.AcessoEstoque()) {
+            mostrarAlerta("Acesso restrito", "Seu usuário não possui permissão para movimentar o estoque.");
+            return;
+        }
+
         try {
             restaurarBarraSuperior();
 
@@ -690,6 +726,7 @@ public class MesaController extends BaseController {
         try {
             sincronizarMesasComConfig();
             restaurarBarraSuperior();
+            exibirAcaoNovaComanda(true);
 
             if (this.listaDeProdutos == null) {
                 this.listaDeProdutos =
@@ -756,12 +793,16 @@ public class MesaController extends BaseController {
                 barraSuperiorOriginal
         );
 
+        exibirAcaoNovaComanda(false);
+    }
+
+    private void exibirAcaoNovaComanda(boolean visivel) {
         botaoNovaComanda.setVisible(
-                true
+                visivel
         );
 
         botaoNovaComanda.setManaged(
-                true
+                visivel
         );
     }
 
@@ -776,6 +817,7 @@ public class MesaController extends BaseController {
         for (
                 Button botao :
                 List.of(
+                        botaoPainelInicial,
                         botaoMesas,
                         botaoComandas,
                         botaoProdutos,
