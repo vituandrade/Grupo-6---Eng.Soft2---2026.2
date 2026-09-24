@@ -136,7 +136,7 @@ public class LoginController {
             Stage stage = (Stage) campoUsuario.getScene().getWindow();
             stage.setScene(new Scene(root));
             stage.setMaximized(true);
-            stage.setTitle("Mesas - Sistema Restaurante");
+            stage.setTitle("Sistema Restaurante");
             stage.show();
 
         } catch (IOException e) {

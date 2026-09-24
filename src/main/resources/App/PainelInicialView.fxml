@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="22.0" styleClass="painel-inicial" stylesheets="@PainelInicial.css"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="App.Controles.PainelInicialController">
+    <padding>
+        <Insets bottom="34.0" left="34.0" right="34.0" top="26.0" />
+    </padding>
+
+    <Label styleClass="section-title" text="Visão geral do restaurante" />
+
+    <HBox spacing="24.0">
+        <VBox maxWidth="Infinity" spacing="12.0" styleClass="summary-card" HBox.hgrow="ALWAYS">
+            <Label styleClass="summary-label" text="Mesas livres" />
+            <Label fx:id="labelMesasLivres" styleClass="summary-value, value-success" text="00" />
+        </VBox>
+        <VBox maxWidth="Infinity" spacing="12.0" styleClass="summary-card" HBox.hgrow="ALWAYS">
+            <Label styleClass="summary-label" text="Comandas abertas" />
+            <Label fx:id="labelComandasAbertas" styleClass="summary-value, value-warning" text="00" />
+        </VBox>
+        <VBox maxWidth="Infinity" spacing="12.0" styleClass="summary-card" HBox.hgrow="ALWAYS">
+            <Label styleClass="summary-label" text="Itens com estoque baixo" />
+            <Label fx:id="labelEstoqueBaixo" styleClass="summary-value, value-danger" text="00" />
+        </VBox>
+    </HBox>
+
+    <HBox spacing="24.0" VBox.vgrow="ALWAYS">
+        <VBox spacing="18.0" styleClass="content-card" HBox.hgrow="ALWAYS">
+            <Label styleClass="card-title" text="Comandas em andamento" />
+            <VBox fx:id="listaComandas" spacing="13.0" />
+            <Label fx:id="labelSemComandas" styleClass="empty-message"
+                   text="Nenhuma comanda em andamento." />
+            <Region VBox.vgrow="ALWAYS" />
+        </VBox>
+
+        <VBox prefWidth="295.0" spacing="14.0" styleClass="content-card, quick-actions">
+            <Label styleClass="card-title" text="Ações rápidas" />
+            <Button maxWidth="Infinity" onAction="#abrirComanda"
+                    styleClass="quick-button, quick-button-primary" text="Abrir comanda" />
+            <Button maxWidth="Infinity" onAction="#registrarPedido"
+                    styleClass="quick-button" text="Registrar pedido" />
+            <Button fx:id="botaoMovimentarEstoque" maxWidth="Infinity" onAction="#movimentarEstoque"
+                    styleClass="quick-button" text="Movimentar estoque" />
+            <Button maxWidth="Infinity" onAction="#fecharConta"
+                    styleClass="quick-button" text="Fechar conta" />
+            <Region VBox.vgrow="ALWAYS" />
+        </VBox>
+    </HBox>
+</VBox>
