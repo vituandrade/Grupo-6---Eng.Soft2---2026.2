@@ -64,4 +64,29 @@ public interface InterfacePersistencia {
             List<Usuario> usuarios
     ) {
     }
+
+    // ── UC03 – Mesas ─────────────────────────────────────────────────────────
+
+    /**
+     * Retorna os números de todas as mesas cadastradas, em ordem crescente.
+     */
+    default List<Integer> carregarMesas() {
+        return List.of();
+    }
+
+    /**
+     * Persiste uma nova mesa com o número informado.
+     * Operação idempotente (ON CONFLICT IGNORE).
+     */
+    default void salvarMesa(int numero) {
+        // implementação opcional para adaptadores sem banco
+    }
+
+    /**
+     * Remove a mesa com o número informado do banco de dados.
+     */
+    default void removerMesa(int numero) {
+        // implementação opcional para adaptadores sem banco
+    }
 }
+

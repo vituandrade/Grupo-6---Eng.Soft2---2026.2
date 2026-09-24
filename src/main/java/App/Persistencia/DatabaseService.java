@@ -173,6 +173,13 @@ public class DatabaseService implements InterfacePersistencia {
                 )
                 """;
 
+        // UC03 – tabela de mesas cadastradas individualmente
+        String criarMesas = """
+                CREATE TABLE IF NOT EXISTS mesas (
+                    numero INTEGER PRIMARY KEY CHECK (numero > 0)
+                )
+                """;
+
         try (Connection conexao = conectar(); Statement statement = conexao.createStatement()) {
             statement.execute(criarConfig);
             statement.execute(criarUsuarios);
@@ -183,6 +190,7 @@ public class DatabaseService implements InterfacePersistencia {
             statement.execute(criarVendaItens);
             statement.execute(criarComandasAbertas);
             statement.execute(criarPedidosAbertos);
+            statement.execute(criarMesas);
             garantirColunaDisponibilidade(statement);
         } catch (SQLException e) {
             throw new PersistenciaException("Não foi possível inicializar o banco de dados.", e);
@@ -1098,4 +1106,54 @@ public class DatabaseService implements InterfacePersistencia {
         }
     }
 
+    // ── UC03 – Mesas ─────────────────────────────────────────────────────────
+
+    /**
+     * Retorna os números de todas as mesas cadastradas em ordem crescente.
+     */
+    @Override
+    public List<Integer> carregarMesas() {
+        List<Integer> numeros = new ArrayList<>();
+        String sql = "SELECT numero FROM mesas ORDER BY numero";
+        try (Connection conexao = conectar();
+             PreparedStatement statement = conexao.prepareStatement(sql);
+             ResultSet resultado = statement.executeQuery()) {
+            while (resultado.next()) {
+                numeros.add(resultado.getInt("numero"));
+            }
+            return numeros;
+        } catch (SQLException e) {
+            throw new PersistenciaException("Não foi possível carregar as mesas.", e);
+        }
+    }
+
+    /**
+     * Persiste uma nova mesa. Idempotente: ignora conflito de chave primária.
+     */
+    @Override
+    public void salvarMesa(int numero) {
+        String sql = "INSERT OR IGNORE INTO mesas (numero) VALUES (?)";
+        try (Connection conexao = conectar();
+             PreparedStatement statement = conexao.prepareStatement(sql)) {
+            statement.setInt(1, numero);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new PersistenciaException("Não foi possível salvar a mesa " + numero + ".", e);
+        }
+    }
+
+    /**
+     * Remove a mesa com o número informado.
+     */
+    @Override
+    public void removerMesa(int numero) {
+        String sql = "DELETE FROM mesas WHERE numero = ?";
+        try (Connection conexao = conectar();
+             PreparedStatement statement = conexao.prepareStatement(sql)) {
+            statement.setInt(1, numero);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new PersistenciaException("Não foi possível remover a mesa " + numero + ".", e);
+        }
+    }
 }

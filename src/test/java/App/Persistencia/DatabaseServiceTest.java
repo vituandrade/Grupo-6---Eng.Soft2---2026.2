@@ -19,6 +19,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -182,4 +183,48 @@ class DatabaseServiceTest {
         String caminho = pastaTemporaria.resolve("teste.db").toString();
         return new DatabaseService(caminho, false);
     }
+
+    // ── UC03 – Mesas ─────────────────────────────────────────────────────────
+
+    @Test
+    void persisteMesaERecuperaAposReiniciar() {
+        String caminho = pastaTemporaria.resolve("mesas-persistentes.db").toString();
+        DatabaseService banco = new DatabaseService(caminho, false);
+
+        // Cria três mesas com números não sequenciais
+        banco.salvarMesa(3);
+        banco.salvarMesa(7);
+        banco.salvarMesa(15);
+
+        // Reabre o banco (simula reinicialização da aplicação)
+        DatabaseService bancoReaberto = new DatabaseService(caminho, false);
+        List<Integer> numeros = bancoReaberto.carregarMesas();
+
+        assertEquals(3, numeros.size(), "Devem existir 3 mesas após reiniciar");
+        assertEquals(List.of(3, 7, 15), numeros, "Números devem ser os mesmos e em ordem crescente");
+    }
+
+    @Test
+    void salvarMesaDuplicadaNaoLancaExcecao() {
+        DatabaseService banco = criarBanco();
+        banco.salvarMesa(5);
+
+        // Idempotente: inserir o mesmo número não deve lançar exceção
+        assertDoesNotThrow(() -> banco.salvarMesa(5));
+        assertEquals(1, banco.carregarMesas().size(), "Não deve criar duplicata");
+    }
+
+    @Test
+    void removerMesaExclui() {
+        DatabaseService banco = criarBanco();
+        banco.salvarMesa(1);
+        banco.salvarMesa(2);
+
+        banco.removerMesa(1);
+
+        List<Integer> numeros = banco.carregarMesas();
+        assertEquals(1, numeros.size());
+        assertEquals(2, numeros.get(0));
+    }
 }
+

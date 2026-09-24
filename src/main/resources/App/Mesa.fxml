@@ -122,6 +122,18 @@
                                    -fx-background-radius: 5;
                                    -fx-padding: 9 15 9 15;" />
 
+                    <!-- UC03: Cadastrar nova mesa (visível só para Interno). -->
+                    <Button fx:id="botaoNovaMesa"
+                            managed="false"
+                            onAction="#adicionarNovaMesa"
+                            text="+ Nova Mesa"
+                            visible="false"
+                            style="-fx-background-color: #204b55;
+                                   -fx-text-fill: white;
+                                   -fx-font-weight: bold;
+                                   -fx-background-radius: 5;
+                                   -fx-padding: 9 15 9 15;" />
+
                     <!-- USUÁRIO -->
                     <Label fx:id="labelUsuario"
                            styleClass="user-label"

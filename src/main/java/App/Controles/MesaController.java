@@ -1,6 +1,7 @@
 package App.Controles;
 
 import App.Persistencia.InterfacePersistencia;
+import App.Validacao.MesaValidator;
 
 import Model.Atendimento.Mesa;
 import Model.Atendimento.Comanda;
@@ -18,6 +19,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
@@ -27,6 +29,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class MesaController extends BaseController {
 
@@ -67,6 +70,10 @@ public class MesaController extends BaseController {
     @FXML
     private Button botaoNovaComanda;
 
+    // UC03 – botão cadastrar nova mesa (visível só para Interno)
+    @FXML
+    private Button botaoNovaMesa;
+
     private Usuario usuarioLogado;
     private List<Mesa> listaDeMesas = new ArrayList<>();
     private List<Produto> listaDeProdutos;
@@ -92,6 +99,9 @@ public class MesaController extends BaseController {
             botaoProdutos.setManaged(true);
             botaoEstoque.setVisible(true);
             botaoEstoque.setManaged(true);
+            // UC03 – somente Interno pode cadastrar novas mesas
+            botaoNovaMesa.setVisible(true);
+            botaoNovaMesa.setManaged(true);
         }
 
         this.painelConteudo =
@@ -127,22 +137,31 @@ public class MesaController extends BaseController {
         );
     }
 
+    // ── Carregamento ────────────────────────────────────────────────────────
+
+    /**
+     * Carrega as mesas a partir do banco de dados (UC03).
+     * Se o banco ainda não possui mesas cadastradas, usa config.getNumeroDeMesas()
+     * como carga inicial (compatibilidade com instalações existentes).
+     */
     private void carregarMesas() {
         painelMesas.getChildren().clear();
         this.listaDeMesas.clear();
 
-        int numeroTotalDeMesas =
-                this.config.getNumeroDeMesas();
+        List<Integer> numeros = new ArrayList<>(persistenceService.carregarMesas());
 
-        for (int i = 1; i <= numeroTotalDeMesas; i++) {
-            Mesa novaMesa = new Mesa(i);
+        if (numeros.isEmpty()) {
+            // Carga inicial: semeia a partir da configuração global
+            int totalConfig = this.config.getNumeroDeMesas();
+            for (int i = 1; i <= totalConfig; i++) {
+                persistenceService.salvarMesa(i);
+                numeros.add(i);
+            }
+        }
 
-            this.listaDeMesas.add(novaMesa);
-
-            VBox mesaBox =
-                    criarMesaVisual(novaMesa);
-
-            painelMesas.getChildren().add(mesaBox);
+        for (int numero : numeros) {
+            Mesa mesa = new Mesa(numero);
+            this.listaDeMesas.add(mesa);
         }
     }
 
@@ -301,6 +320,35 @@ public class MesaController extends BaseController {
                     "Não foi possível abrir o gerenciador da mesa."
             );
         }
+    }
+
+    /**
+     * UC03 – Fluxo principal: cadastrar nova mesa.
+     * Exibe diálogo para informar o número; valida (FA01, FA02) e persiste.
+     */
+    @FXML
+    private void adicionarNovaMesa() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Nova Mesa");
+        dialog.setHeaderText("Cadastrar nova mesa");
+        dialog.setContentText("Número da mesa:");
+
+        Optional<String> resposta = dialog.showAndWait();
+        if (resposta.isEmpty()) return;
+
+        String texto = resposta.get().trim();
+        MesaValidator.Resultado resultado = MesaValidator.validarTexto(texto, this.listaDeMesas);
+
+        if (!resultado.valido()) {
+            mostrarAlerta("Número inválido", resultado.mensagem());
+            return;
+        }
+
+        int numero = Integer.parseInt(texto);
+        Mesa novaMesa = new Mesa(numero);
+        this.listaDeMesas.add(novaMesa);
+        persistenceService.salvarMesa(numero);
+        atualizarVisualDasMesas();
     }
 
     @FXML
