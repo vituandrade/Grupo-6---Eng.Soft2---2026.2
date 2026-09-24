@@ -10,21 +10,46 @@ public class Pedido {
     private String observacao;
     private Date horario;
     private int numeroLote;
+    private final Usuario atendente;
 
     public Pedido(ItemVendavel item, int quantidade, String observacao, Usuario atendente){
-        if(quantidade <= 0 ) throw new IllegalArgumentException("Quantidade invalida");
+        this(item, quantidade, observacao, atendente, new Date(), 0);
+    }
+
+    public Pedido(
+            ItemVendavel item,
+            int quantidade,
+            String observacao,
+            Usuario atendente,
+            Date horario,
+            int numeroLote
+    ){
+        if(quantidade <= 0) throw new IllegalArgumentException("Quantidade invalida");
         this.item = item;
         this.quantidade = quantidade;
         this.observacao = observacao;
-        this.horario = new Date();
+        this.horario = horario == null ? new Date() : horario;
+        this.atendente = atendente;
+        this.numeroLote = numeroLote;
     }
 
     public ItemVendavel getItem() {
         return item;
     }
 
+    /**
+     * Define a quantidade final do item.
+     * A operação é uma atribuição, não um incremento.
+     */
     public void setQuantidade(int quantidade) {
-        this.quantidade += quantidade;
+        if (quantidade <= 0) {
+            throw new IllegalArgumentException("Quantidade invalida");
+        }
+        this.quantidade = quantidade;
+    }
+
+    public Usuario getAtendente() {
+        return atendente;
     }
 
     public int getQuantidade() {

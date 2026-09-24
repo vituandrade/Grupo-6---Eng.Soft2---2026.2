@@ -72,6 +72,12 @@
                         text="Estoque"
                         visible="false" />
 
+                <Button fx:id="botaoHistorico"
+                        maxWidth="Infinity"
+                        onAction="#abrirHistoricoVendas"
+                        styleClass="menu-button"
+                        text="Histórico" />
+
             </VBox>
 
         </VBox>

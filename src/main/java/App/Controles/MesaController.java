@@ -4,6 +4,7 @@ import App.Persistencia.InterfacePersistencia;
 
 import Model.Atendimento.Mesa;
 import Model.Atendimento.Comanda;
+import Model.Atendimento.Venda;
 import Model.Produtos.ItemVendavel;
 import Model.Produtos.Produto;
 import Model.Sistema.Config;
@@ -58,6 +59,9 @@ public class MesaController extends BaseController {
     private Button botaoEstoque;
 
     @FXML
+    private Button botaoHistorico;
+
+    @FXML
     private Button botaoNovaComanda;
 
     private Usuario usuarioLogado;
@@ -98,6 +102,25 @@ public class MesaController extends BaseController {
 
         restaurarBarraSuperior();
         carregarMesas();
+        carregarComandasPersistidas();
+        atualizarVisualDasMesas();
+    }
+
+    private void carregarComandasPersistidas() {
+        if (this.persistenceService == null) {
+            return;
+        }
+        if (this.listaDeProdutos == null) {
+            this.listaDeProdutos = this.persistenceService.carregarProdutos();
+        }
+        List<Usuario> usuarios = this.persistenceService.carregarUsuarios();
+        this.comandasSemMesa.clear();
+        this.persistenceService.carregarComandasAbertas(
+                this.listaDeMesas,
+                this.comandasSemMesa,
+                this.listaDeProdutos,
+                usuarios
+        );
     }
 
     private void carregarMesas() {
@@ -244,10 +267,12 @@ public class MesaController extends BaseController {
             GerenciarMesaController controller =
                     loader.getController();
 
+            if (this.listaDeProdutos == null) {
+                this.listaDeProdutos = this.persistenceService.carregarProdutos();
+            }
+
             List<ItemVendavel> itensVendaveis =
-                    new ArrayList<>(
-                            this.persistenceService.carregarProdutos()
-                    );
+                    new ArrayList<>(this.listaDeProdutos);
 
             controller.inicializar(
                     mesaSelecionada,
@@ -371,10 +396,12 @@ public class MesaController extends BaseController {
 
         controller.setNavegador(this);
 
+        persistirComandaAberta(comanda, mesa);
+
+        this.listaDeProdutos = this.persistenceService.carregarProdutos();
+
         List<ItemVendavel> itensVendaveis =
-                new ArrayList<>(
-                        this.persistenceService.carregarProdutos()
-                );
+                new ArrayList<>(this.listaDeProdutos);
 
         controller.carregarComanda(
                 mesa,
@@ -432,6 +459,48 @@ public class MesaController extends BaseController {
                     "Não foi possível abrir a tela de fechamento da conta."
             );
         }
+    }
+
+    /**
+     * Persiste a lista de produtos mantida pela sessão.
+     * O fluxo de comandas usa os mesmos objetos, evitando divergência entre
+     * o estoque consultado no pedido e o estoque salvo no banco.
+     */
+    public void persistirProdutosAtualizados() {
+        if (this.listaDeProdutos == null) {
+            throw new IllegalStateException("Lista de produtos não carregada.");
+        }
+        this.persistenceService.salvarProdutos(this.listaDeProdutos);
+    }
+
+    /**
+     * Registra a venda decorrente do fechamento da comanda no histórico local.
+     * A persistência ocorre antes da alteração final do estado da comanda.
+     */
+    public Venda registrarVendaNoHistorico(
+            Comanda comanda,
+            Mesa mesa,
+            Model.Pagamento.Pagamento pagamento,
+            double desconto
+    ) {
+        return this.persistenceService.registrarVenda(
+                comanda,
+                mesa,
+                this.usuarioLogado,
+                pagamento,
+                desconto
+        );
+    }
+
+    public void persistirComandaAberta(Comanda comanda, Mesa mesa) {
+        if (this.persistenceService == null) {
+            throw new IllegalStateException("Serviço de persistência não configurado.");
+        }
+        this.persistenceService.salvarComandaAberta(
+                comanda,
+                mesa,
+                this.usuarioLogado
+        );
     }
 
     private Mesa encontrarMesaDaComanda(
@@ -509,6 +578,27 @@ public class MesaController extends BaseController {
                     "Erro",
                     "Não foi possível carregar a tela de produtos."
             );
+        }
+    }
+
+    @FXML
+    private void abrirHistoricoVendas() {
+        try {
+            restaurarBarraSuperior();
+
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/App/HistoricoVendasView.fxml")
+            );
+            Node painelHistorico = loader.load();
+
+            HistoricoVendasController controller = loader.getController();
+            controller.inicializar(this.persistenceService);
+
+            painelConteudo.setCenter(painelHistorico);
+            selecionarMenu(botaoHistorico, "Histórico de vendas");
+        } catch (IOException | RuntimeException e) {
+            e.printStackTrace();
+            mostrarAlerta("Erro", "Não foi possível carregar o histórico de vendas.");
         }
     }
 
@@ -689,7 +779,8 @@ public class MesaController extends BaseController {
                         botaoMesas,
                         botaoComandas,
                         botaoProdutos,
-                        botaoEstoque
+                        botaoEstoque,
+                        botaoHistorico
                 )
         ) {
             botao.getStyleClass().remove(

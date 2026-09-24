@@ -142,6 +142,17 @@
 
                     <HBox spacing="10">
 
+                        <Button text="ALTERAR QUANTIDADE"
+                                onAction="#alterarQuantidadePedido"
+                                prefHeight="38.0"
+                                maxWidth="Infinity"
+                                HBox.hgrow="ALWAYS"
+                                style="-fx-background-color: #1680A0;
+                                       -fx-text-fill: white;
+                                       -fx-background-radius: 5;
+                                       -fx-font-size: 10px;
+                                       -fx-font-weight: bold;"/>
+
                         <Button text="REMOVER PEDIDO SELECIONADO"
                                 onAction="#removerPedido"
                                 prefHeight="38.0"

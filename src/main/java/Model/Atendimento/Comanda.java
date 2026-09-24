@@ -1,8 +1,10 @@
 package Model.Atendimento;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import Model.Pagamento.Pagamento;
+import Model.Usuarios.Usuario;
 
 public class Comanda {
 
@@ -13,15 +15,45 @@ public class Comanda {
     private List<Pedido> pedidos;
     private double desconto;
     private Pagamento pagamento;
+    private final Date dataAbertura;
+    private Date dataFechamento;
+    private Usuario funcionarioFechamento;
 
     private int proximoLote = 1;
 
     public Comanda() {
-        this.id = proximoId++;
+        this(gerarNovoId(), null, new Date());
+    }
+
+    public Comanda(int id, String clienteNome, Date dataAbertura) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("ID da comanda inválido");
+        }
+        this.id = id;
+        ajustarProximoId(id);
         this.pedidos = new ArrayList<>();
         this.fechada = false;
-        this.clienteNome = "Cliente " + this.id;
+        this.clienteNome = clienteNome == null || clienteNome.isBlank()
+                ? "Cliente " + this.id
+                : clienteNome;
         this.desconto = 0.0;
+        this.dataAbertura = dataAbertura == null ? new Date() : dataAbertura;
+    }
+
+    private static int gerarNovoId() {
+        return proximoId++;
+    }
+
+    private static void ajustarProximoId(int id) {
+        if (proximoId <= id) {
+            proximoId = id + 1;
+        }
+    }
+
+    public static void ajustarProximoIdPersistido(int id) {
+        if (id > 0) {
+            ajustarProximoId(id);
+        }
     }
 
     public int getId() {
@@ -53,7 +85,19 @@ public class Comanda {
         this.desconto = desconto;
     }
 
-        public Pagamento getPagamento() {
+    public Date getDataAbertura() {
+        return dataAbertura;
+    }
+
+    public Date getDataFechamento() {
+        return dataFechamento;
+    }
+
+    public Usuario getFuncionarioFechamento() {
+        return funcionarioFechamento;
+    }
+
+    public Pagamento getPagamento() {
             return pagamento;
     }
 
@@ -67,6 +111,14 @@ public class Comanda {
 
     public int gerarNovoNumeroLote() {
         return proximoLote++;
+    }
+
+    public void recalcularProximoLote() {
+        int maior = 0;
+        for (Pedido pedido : pedidos) {
+            maior = Math.max(maior, pedido.getNumeroLote());
+        }
+        proximoLote = maior + 1;
     }
 
     public void adicionarPedido(Pedido p){
@@ -99,6 +151,10 @@ public class Comanda {
     }
 
     public void registrarFechamento(Pagamento pagamento, double desconto) {
+        registrarFechamento(pagamento, desconto, null);
+    }
+
+    public void registrarFechamento(Pagamento pagamento, double desconto, Usuario funcionario) {
 
         if (fechada) {
             throw new IllegalStateException(
@@ -120,6 +176,12 @@ public class Comanda {
 
         double subtotal = calcularSubtotal();
 
+        if (pedidos.isEmpty()) {
+            throw new IllegalStateException(
+                    "A comanda precisa ter ao menos um item para ser fechada"
+            );
+        }
+
         if (desconto < 0) {
             throw new IllegalArgumentException(
                     "Desconto não pode ser negativo"
@@ -134,6 +196,8 @@ public class Comanda {
 
         this.desconto = desconto;
         this.pagamento = pagamento;
+        this.funcionarioFechamento = funcionario;
+        this.dataFechamento = new Date();
         this.fechada = true;
     }
 

@@ -22,6 +22,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 
+import java.util.Locale;
+
 public class FechamentoContaController extends BaseController {
 
     @FXML
@@ -265,6 +267,7 @@ public class FechamentoContaController extends BaseController {
 
         labelSubtotal.setText(
                 String.format(
+                        Locale.forLanguageTag("pt-BR"),
                         "R$ %.2f",
                         subtotal
                 )
@@ -272,6 +275,7 @@ public class FechamentoContaController extends BaseController {
 
         labelDesconto.setText(
                 String.format(
+                        Locale.forLanguageTag("pt-BR"),
                         "R$ %.2f",
                         desconto
                 )
@@ -279,6 +283,7 @@ public class FechamentoContaController extends BaseController {
 
         labelTotal.setText(
                 String.format(
+                        Locale.forLanguageTag("pt-BR"),
                         "R$ %.2f",
                         total
                 )
@@ -434,10 +439,29 @@ public class FechamentoContaController extends BaseController {
         }
 
         try {
-            comanda.registrarFechamento(
+            if (navegador == null) {
+                throw new IllegalStateException("A sessão do sistema não está disponível.");
+            }
+
+            // Primeiro grava a venda no banco. Assim o fechamento só é concluído
+            // depois que o registro exigido pelo RF06 estiver persistido.
+            navegador.registrarVendaNoHistorico(
+                    comanda,
+                    mesa,
                     pagamento,
                     desconto
             );
+
+            comanda.registrarFechamento(
+                    pagamento,
+                    desconto,
+                    usuario
+            );
+
+            // O fechamento devolve a mesa ao estado Livre.
+            if (mesa != null) {
+                mesa.setAguardandoPagamento(false);
+            }
 
         } catch (
                 IllegalStateException |

@@ -49,6 +49,7 @@ public class ComandaController extends BaseController {
     private Usuario atendente;
     private List<ItemVendavel> itensDisponiveis;
     private Produto produtoSelecionado;
+    private Pedido pedidoSelecionado;
     private MesaController navegador;
 
     public void setNavegador(MesaController navegador) {
@@ -84,6 +85,7 @@ public class ComandaController extends BaseController {
         );
 
         configurarArvorePedidos();
+        configurarSelecaoDePedido();
         configurarSpinner();
         construirAbasDeProdutos("");
         atualizarArvoreDePedidos();
@@ -122,6 +124,59 @@ public class ComandaController extends BaseController {
                     numeroComanda +
                     " • Cliente sem mesa"
             );
+        }
+    }
+
+    private void configurarSelecaoDePedido() {
+        arvorePedidos.getSelectionModel()
+                .selectedItemProperty()
+                .addListener((obs, anterior, atual) -> {
+                    Object valor = atual == null ? null : atual.getValue();
+                    if (valor instanceof Pedido pedido) {
+                        pedidoSelecionado = pedido;
+                        spinnerQuantidade.getValueFactory().setValue(pedido.getQuantidade());
+                        labelItemSelecionado.setText("Pedido: " + pedido.getItem().getNome());
+                    } else {
+                        pedidoSelecionado = null;
+                    }
+                });
+    }
+
+    private void limparSelecaoDePedido() {
+        pedidoSelecionado = null;
+    }
+
+    private Produto localizarProdutoAtualizado(String nome) {
+        if (nome == null || itensDisponiveis == null) {
+            return null;
+        }
+
+        for (ItemVendavel item : itensDisponiveis) {
+            if (item instanceof Produto produto
+                    && produto.getNome().equalsIgnoreCase(nome)) {
+                return produto;
+            }
+        }
+
+        return null;
+    }
+
+    private void atualizarEstoqueDosObjetos(
+            String nomeProduto,
+            int novoEstoque
+    ) {
+        if (itensDisponiveis != null) {
+            for (ItemVendavel item : itensDisponiveis) {
+                if (item instanceof Produto produto
+                        && produto.getNome().equalsIgnoreCase(nomeProduto)) {
+                    produto.setEstoque(novoEstoque);
+                }
+            }
+        }
+
+        if (produtoSelecionado != null
+                && produtoSelecionado.getNome().equalsIgnoreCase(nomeProduto)) {
+            produtoSelecionado.setEstoque(novoEstoque);
         }
     }
 
@@ -340,6 +395,14 @@ public class ComandaController extends BaseController {
     @FXML
     private void confirmarPedidoCompleto() {
 
+        if (this.comanda.isFechada()) {
+            mostrarAlerta(
+                    "Comanda fechada",
+                    "Esta comanda já foi fechada e não aceita novos pedidos."
+            );
+            return;
+        }
+
         if (observableCarrinho.isEmpty()) {
             mostrarAlerta(
                     "Vazio",
@@ -348,86 +411,223 @@ public class ComandaController extends BaseController {
             return;
         }
 
-        List<Pedido> pedidosConfirmados =
-                new ArrayList<>();
-
-        StringBuilder erros =
-                new StringBuilder();
-
-        int novoLote =
-                this.comanda.gerarNovoNumeroLote();
-
-        for (Pedido pedido :
-                observableCarrinho) {
-
-            ItemVendavel item =
-                    pedido.getItem();
-
-            if (item instanceof Produto) {
-
-                Produto p =
-                        (Produto) item;
-
-                if (p.getEstoque() >=
-                        pedido.getQuantidade()) {
-
-                    p.setEstoque(
-                            p.getEstoque()
-                                    - pedido.getQuantidade()
-                    );
-
-                    pedido.setNumeroLote(
-                            novoLote
-                    );
-
-                    pedidosConfirmados.add(
-                            pedido
-                    );
-
-                } else {
-
-                    erros.append(
-                            "- "
-                    ).append(
-                            p.getNome()
-                    ).append(
-                            ": Estoque insuficiente.\n"
-                    );
-                }
-
-            } else {
-
-                pedido.setNumeroLote(
-                        novoLote
-                );
-
-                pedidosConfirmados.add(
-                        pedido
+        // Valida todo o carrinho antes de alterar qualquer estoque.
+        Map<Produto, Integer> quantidadesPorProduto = new HashMap<>();
+        for (Pedido pedido : observableCarrinho) {
+            if (pedido.getItem() instanceof Produto produto) {
+                quantidadesPorProduto.merge(
+                        produto,
+                        pedido.getQuantidade(),
+                        Integer::sum
                 );
             }
         }
 
-        for (Pedido p :
-                pedidosConfirmados) {
+        StringBuilder erros = new StringBuilder();
+        for (Map.Entry<Produto, Integer> entrada : quantidadesPorProduto.entrySet()) {
+            Produto produto = entrada.getKey();
+            int quantidadeSolicitada = entrada.getValue();
 
-            this.comanda.adicionarPedido(
-                    p
-            );
+            if (!produto.isDisponivel()) {
+                erros.append("- ")
+                        .append(produto.getNome())
+                        .append(": item indisponível.\n");
+                continue;
+            }
+
+            if (produto.getEstoque() < quantidadeSolicitada) {
+                erros.append("- ")
+                        .append(produto.getNome())
+                        .append(": estoque insuficiente.\n");
+            }
         }
-
-        this.observableCarrinho.removeAll(
-                pedidosConfirmados
-        );
-
-        atualizarArvoreDePedidos();
-        atualizarTotal();
 
         if (erros.length() > 0) {
             mostrarAlerta(
-                    "Alguns itens não foram adicionados",
+                    "Pedido não registrado",
                     erros.toString()
             );
+            return;
         }
+
+        Map<Produto, Integer> estoqueAnterior = new HashMap<>();
+        int novoLote = this.comanda.gerarNovoNumeroLote();
+
+        try {
+            // Aplica todas as alterações somente depois de validar o carrinho inteiro.
+            for (Map.Entry<Produto, Integer> entrada : quantidadesPorProduto.entrySet()) {
+                Produto produto = entrada.getKey();
+                estoqueAnterior.put(produto, produto.getEstoque());
+                produto.setEstoque(produto.getEstoque() - entrada.getValue());
+            }
+
+            // Persiste o estoque antes de confirmar os pedidos na comanda.
+            persistirProdutos();
+
+            List<Pedido> pedidosAdicionados = new ArrayList<>(observableCarrinho);
+            for (Pedido pedido : pedidosAdicionados) {
+                pedido.setNumeroLote(novoLote);
+                this.comanda.adicionarPedido(pedido);
+            }
+
+            try {
+                navegador.persistirComandaAberta(
+                        this.comanda,
+                        this.mesa
+                );
+            } catch (RuntimeException erro) {
+                for (Pedido pedido : pedidosAdicionados) {
+                    this.comanda.getPedidos().remove(pedido);
+                }
+                for (Map.Entry<Produto, Integer> entrada : estoqueAnterior.entrySet()) {
+                    entrada.getKey().setEstoque(entrada.getValue());
+                }
+                persistirProdutos();
+                throw erro;
+            }
+
+            this.observableCarrinho.clear();
+            atualizarArvoreDePedidos();
+            atualizarTotal();
+
+        } catch (RuntimeException erro) {
+            // Não deixa a aplicação em estado divergente caso a persistência ou a inclusão falhe.
+            for (Map.Entry<Produto, Integer> entrada : estoqueAnterior.entrySet()) {
+                entrada.getKey().setEstoque(entrada.getValue());
+            }
+
+            mostrarAlerta(
+                    "Falha ao registrar pedido",
+                    "Não foi possível gravar o pedido. Nenhuma alteração foi mantida."
+            );
+        }
+    }
+
+    private void persistirProdutos() {
+        if (navegador == null) {
+            throw new IllegalStateException("Navegador não configurado.");
+        }
+        navegador.persistirProdutosAtualizados();
+    }
+
+    @FXML
+    private void alterarQuantidadePedido() {
+        if (comanda == null) {
+            mostrarAlerta("Erro", "Nenhuma comanda foi carregada.");
+            return;
+        }
+
+        if (comanda.isFechada()) {
+            mostrarAlerta("Comanda fechada", "Não é possível alterar pedidos de uma comanda fechada.");
+            return;
+        }
+
+        if (pedidoSelecionado == null) {
+            mostrarAlerta("Erro", "Selecione um item do pedido para alterar.");
+            return;
+        }
+
+        int novaQuantidade = spinnerQuantidade.getValue();
+        int quantidadeAtual = pedidoSelecionado.getQuantidade();
+
+        if (novaQuantidade == quantidadeAtual) {
+            mostrarAlerta("Quantidade", "A nova quantidade é igual à quantidade atual.");
+            return;
+        }
+
+        Produto produto = pedidoSelecionado.getItem() instanceof Produto
+                ? localizarProdutoAtualizado(pedidoSelecionado.getItem().getNome())
+                : null;
+
+        int diferenca = novaQuantidade - quantidadeAtual;
+        int estoqueAtual = produto == null ? 0 : produto.getEstoque();
+        int novoEstoque = estoqueAtual - diferenca;
+
+        if (produto != null) {
+            if (novoEstoque < 0) {
+                mostrarAlerta(
+                        "Estoque insuficiente",
+                        "Não há estoque suficiente para aumentar a quantidade para " + novaQuantidade + "."
+                );
+                spinnerQuantidade.getValueFactory().setValue(quantidadeAtual);
+                return;
+            }
+            produto.setEstoque(novoEstoque);
+        }
+
+        pedidoSelecionado.setQuantidade(novaQuantidade);
+
+        if (produto != null) {
+            try {
+                persistirProdutos();
+                try {
+                    navegador.persistirComandaAberta(
+                            this.comanda,
+                            this.mesa
+                    );
+                } catch (RuntimeException erro) {
+                    produto.setEstoque(estoqueAtual);
+                    pedidoSelecionado.setQuantidade(quantidadeAtual);
+                    if (pedidoSelecionado.getItem() instanceof Produto pedidoProduto) {
+                        pedidoProduto.setEstoque(estoqueAtual);
+                    }
+                    atualizarEstoqueDosObjetos(
+                            produto.getNome(),
+                            estoqueAtual
+                    );
+                    persistirProdutos();
+                    spinnerQuantidade.getValueFactory().setValue(quantidadeAtual);
+                    throw erro;
+                }
+                atualizarEstoqueDosObjetos(
+                        produto.getNome(),
+                        novoEstoque
+                );
+                if (pedidoSelecionado.getItem() instanceof Produto pedidoProduto) {
+                    pedidoProduto.setEstoque(novoEstoque);
+                }
+            } catch (RuntimeException erro) {
+                produto.setEstoque(estoqueAtual);
+                pedidoSelecionado.setQuantidade(quantidadeAtual);
+                if (pedidoSelecionado.getItem() instanceof Produto pedidoProduto) {
+                    pedidoProduto.setEstoque(estoqueAtual);
+                }
+                atualizarEstoqueDosObjetos(
+                        produto.getNome(),
+                        estoqueAtual
+                );
+                spinnerQuantidade.getValueFactory().setValue(quantidadeAtual);
+                mostrarAlerta(
+                        "Falha ao alterar quantidade",
+                        "Não foi possível gravar a alteração. Nenhuma alteração foi mantida."
+                );
+                return;
+            }
+        }
+
+        if (produto == null) {
+            try {
+                navegador.persistirComandaAberta(
+                        this.comanda,
+                        this.mesa
+                );
+            } catch (RuntimeException erro) {
+                pedidoSelecionado.setQuantidade(quantidadeAtual);
+                spinnerQuantidade.getValueFactory().setValue(quantidadeAtual);
+                mostrarAlerta(
+                        "Falha ao alterar quantidade",
+                        "Não foi possível gravar a alteração. Nenhuma alteração foi mantida."
+                );
+                return;
+            }
+        }
+
+        atualizarArvoreDePedidos();
+        atualizarTotal();
+        arvorePedidos.getSelectionModel().clearSelection();
+        limparSelecaoDePedido();
+        spinnerQuantidade.getValueFactory().setValue(1);
+        mostrarAlerta("Quantidade alterada", "A quantidade do pedido foi atualizada com sucesso.");
     }
 
     @FXML
@@ -446,8 +646,7 @@ public class ComandaController extends BaseController {
             return;
         }
 
-        Object valor =
-                itemSelecionado.getValue();
+        Object valor = itemSelecionado.getValue();
 
         if (!(valor instanceof Pedido)) {
             mostrarAlerta(
@@ -457,8 +656,7 @@ public class ComandaController extends BaseController {
             return;
         }
 
-        Pedido pedido =
-                (Pedido) valor;
+        Pedido pedido = (Pedido) valor;
 
         try {
             FXMLLoader loader =
@@ -468,8 +666,7 @@ public class ComandaController extends BaseController {
                             )
                     );
 
-            Parent root =
-                    loader.load();
+            Parent root = loader.load();
 
             CancelarItemController controller =
                     loader.getController();
@@ -479,19 +676,10 @@ public class ComandaController extends BaseController {
                     this.comanda
             );
 
-            Stage stage =
-                    new Stage();
-
-            stage.setTitle(
-                    "Cancelar item"
-            );
-
-            stage.initModality(
-                    Modality.APPLICATION_MODAL
-            );
-
+            Stage stage = new Stage();
+            stage.setTitle("Cancelar item");
+            stage.initModality(Modality.APPLICATION_MODAL);
             stage.setResizable(false);
-
             stage.setScene(
                     new Scene(
                             root,
@@ -499,37 +687,89 @@ public class ComandaController extends BaseController {
                             320
                     )
             );
-
             stage.showAndWait();
 
             if (!controller.isConfirmado()) {
                 return;
             }
 
-            ItemVendavel itemCancelado =
-                    pedido.getItem();
+            if (pedido.getItem() instanceof Produto produtoDoPedido) {
+                Produto produtoAtual =
+                        localizarProdutoAtualizado(
+                                produtoDoPedido.getNome()
+                        );
 
-            if (itemCancelado instanceof Produto) {
+                if (produtoAtual == null) {
+                    mostrarAlerta(
+                            "Falha ao cancelar",
+                            "O produto do pedido não foi encontrado no cardápio atual."
+                    );
+                    return;
+                }
 
-                Produto produtoCancelado =
-                        (Produto) itemCancelado;
+                int estoqueAnterior = produtoAtual.getEstoque();
+                int novoEstoque =
+                        estoqueAnterior + pedido.getQuantidade();
 
-                produtoCancelado.setEstoque(
-                        produtoCancelado.getEstoque()
-                                + pedido.getQuantidade()
-                );
+                try {
+                    produtoAtual.setEstoque(novoEstoque);
+                    produtoDoPedido.setEstoque(novoEstoque);
+                    atualizarEstoqueDosObjetos(
+                            produtoAtual.getNome(),
+                            novoEstoque
+                    );
+                    this.comanda.getPedidos().remove(pedido);
+                    persistirProdutos();
+                    navegador.persistirComandaAberta(
+                            this.comanda,
+                            this.mesa
+                    );
+                } catch (RuntimeException erro) {
+                    produtoAtual.setEstoque(estoqueAnterior);
+                    produtoDoPedido.setEstoque(estoqueAnterior);
+                    atualizarEstoqueDosObjetos(
+                            produtoAtual.getNome(),
+                            estoqueAnterior
+                    );
+                    if (!this.comanda.getPedidos().contains(pedido)) {
+                        this.comanda.getPedidos().add(pedido);
+                    }
+                    persistirProdutos();
+                    try {
+                        navegador.persistirComandaAberta(
+                                this.comanda,
+                                this.mesa
+                        );
+                    } catch (RuntimeException ignored) {
+                    }
+                    mostrarAlerta(
+                            "Falha ao cancelar",
+                            "Não foi possível gravar o cancelamento. Nenhuma alteração foi mantida."
+                    );
+                    return;
+                }
+            } else {
+                this.comanda.getPedidos().remove(pedido);
+                try {
+                    navegador.persistirComandaAberta(
+                            this.comanda,
+                            this.mesa
+                    );
+                } catch (RuntimeException erro) {
+                    this.comanda.getPedidos().add(pedido);
+                    mostrarAlerta(
+                            "Falha ao cancelar",
+                            "Não foi possível gravar o cancelamento. Nenhuma alteração foi mantida."
+                    );
+                    return;
+                }
             }
-
-            this.comanda.getPedidos().remove(
-                    pedido
-            );
 
             atualizarArvoreDePedidos();
             atualizarTotal();
 
         } catch (IOException e) {
             e.printStackTrace();
-
             mostrarAlerta(
                     "Erro",
                     "Não foi possível abrir a tela de cancelamento."
@@ -609,9 +849,7 @@ public class ComandaController extends BaseController {
                 return;
             }
 
-            pedidoExistente.setQuantidade(
-                    qtdTotal
-            );
+            pedidoExistente.setQuantidade(qtdTotal);
 
             listaCarrinho.refresh();
 
@@ -799,6 +1037,8 @@ public class ComandaController extends BaseController {
 
                 btnProduto.setOnAction(
                         e -> {
+
+                            limparSelecaoDePedido();
 
                             if (
                                     this.produtoSelecionado != null
