@@ -461,6 +461,7 @@ public class FechamentoContaController extends BaseController {
             // O fechamento devolve a mesa ao estado Livre.
             if (mesa != null) {
                 mesa.setAguardandoPagamento(false);
+                navegador.persistirMesa(mesa);
             }
 
         } catch (

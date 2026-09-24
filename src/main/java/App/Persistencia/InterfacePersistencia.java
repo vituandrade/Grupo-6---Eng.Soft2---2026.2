@@ -1,6 +1,7 @@
 package App.Persistencia;
 
 import Model.Atendimento.Venda;
+import Model.Atendimento.Mesa;
 import Model.Estoque.ItemEstoque;
 import Model.Estoque.TipoMovimentacao;
 import Model.Sistema.Config;
@@ -63,5 +64,24 @@ public interface InterfacePersistencia {
             List<Produto> produtos,
             List<Usuario> usuarios
     ) {
+    }
+
+    // ── UC03 – Mesas ─────────────────────────────────────────────────────────
+
+    /** Retorna as mesas cadastradas, com seus estados, em ordem numérica. */
+    default List<Mesa> carregarMesas() {
+        return List.of();
+    }
+
+    /** Cria ou atualiza uma mesa e seu estado atual. */
+    default void salvarMesa(Mesa mesa) {
+        // implementação opcional para adaptadores sem banco
+    }
+
+    /**
+     * Remove a mesa com o número informado do banco de dados.
+     */
+    default void removerMesa(int numero) {
+        // implementação opcional para adaptadores sem banco
     }
 }

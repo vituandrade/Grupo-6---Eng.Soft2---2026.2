@@ -1,5 +1,7 @@
 package App.Persistencia;
 
+import Model.Atendimento.EstadoMesa;
+import Model.Atendimento.Mesa;
 import Model.Estoque.ItemEstoque;
 import Model.Estoque.TipoMovimentacao;
 import Model.Produtos.ItemCardapio;
@@ -19,6 +21,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -181,5 +184,69 @@ class DatabaseServiceTest {
     private DatabaseService criarBanco() {
         String caminho = pastaTemporaria.resolve("teste.db").toString();
         return new DatabaseService(caminho, false);
+    }
+
+    // ── UC03 – Mesas ─────────────────────────────────────────────────────────
+
+    @Test
+    void persisteMesaERecuperaAposReiniciar() {
+        String caminho = pastaTemporaria.resolve("mesas-persistentes.db").toString();
+        DatabaseService banco = new DatabaseService(caminho, false);
+
+        // Cria três mesas com números não sequenciais
+        banco.salvarMesa(new Mesa(3));
+        banco.salvarMesa(new Mesa(7, EstadoMesa.OCUPADA));
+        banco.salvarMesa(new Mesa(15, EstadoMesa.AGUARDANDO_FECHAMENTO));
+
+        // Reabre o banco (simula reinicialização da aplicação)
+        DatabaseService bancoReaberto = new DatabaseService(caminho, false);
+        List<Mesa> mesas = bancoReaberto.carregarMesas();
+
+        assertEquals(3, mesas.size(), "Devem existir 3 mesas após reiniciar");
+        assertEquals(List.of(3, 7, 15),
+                mesas.stream().map(Mesa::getNumMesa).toList(),
+                "Números devem ser os mesmos e em ordem crescente");
+        assertEquals(EstadoMesa.OCUPADA, mesas.get(1).getEstado());
+        assertEquals(EstadoMesa.AGUARDANDO_FECHAMENTO, mesas.get(2).getEstado());
+    }
+
+    @Test
+    void adicionaEstadoAoBancoCriadoPelaVersaoAnterior() throws Exception {
+        String caminho = pastaTemporaria.resolve("mesas-legadas.db").toString();
+        try (Connection conexao = DriverManager.getConnection("jdbc:sqlite:" + caminho);
+             Statement statement = conexao.createStatement()) {
+            statement.execute("CREATE TABLE mesas (numero INTEGER PRIMARY KEY CHECK (numero > 0))");
+            statement.execute("INSERT INTO mesas (numero) VALUES (4)");
+        }
+
+        DatabaseService bancoAtualizado = new DatabaseService(caminho, false);
+        Mesa mesaMigrada = bancoAtualizado.carregarMesas().get(0);
+
+        assertEquals(4, mesaMigrada.getNumMesa());
+        assertEquals(EstadoMesa.LIVRE, mesaMigrada.getEstado());
+    }
+
+    @Test
+    void salvarMesaDuplicadaNaoLancaExcecao() {
+        DatabaseService banco = criarBanco();
+        banco.salvarMesa(new Mesa(5));
+
+        // Salvar novamente atualiza o estado sem duplicar a mesa.
+        assertDoesNotThrow(() -> banco.salvarMesa(new Mesa(5, EstadoMesa.OCUPADA)));
+        assertEquals(1, banco.carregarMesas().size(), "Não deve criar duplicata");
+        assertEquals(EstadoMesa.OCUPADA, banco.carregarMesas().get(0).getEstado());
+    }
+
+    @Test
+    void removerMesaExclui() {
+        DatabaseService banco = criarBanco();
+        banco.salvarMesa(new Mesa(1));
+        banco.salvarMesa(new Mesa(2));
+
+        banco.removerMesa(1);
+
+        List<Mesa> mesas = banco.carregarMesas();
+        assertEquals(1, mesas.size());
+        assertEquals(2, mesas.get(0).getNumMesa());
     }
 }

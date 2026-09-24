@@ -1,6 +1,7 @@
 package App.Persistencia;
 
 import Model.Atendimento.Comanda;
+import Model.Atendimento.EstadoMesa;
 import Model.Atendimento.Mesa;
 import Model.Atendimento.Pedido;
 import Model.Atendimento.Venda;
@@ -173,6 +174,14 @@ public class DatabaseService implements InterfacePersistencia {
                 )
                 """;
 
+        // UC03 – tabela de mesas cadastradas individualmente
+        String criarMesas = """
+                CREATE TABLE IF NOT EXISTS mesas (
+                    numero INTEGER PRIMARY KEY CHECK (numero > 0),
+                    estado TEXT NOT NULL DEFAULT 'LIVRE'
+                )
+                """;
+
         try (Connection conexao = conectar(); Statement statement = conexao.createStatement()) {
             statement.execute(criarConfig);
             statement.execute(criarUsuarios);
@@ -183,7 +192,9 @@ public class DatabaseService implements InterfacePersistencia {
             statement.execute(criarVendaItens);
             statement.execute(criarComandasAbertas);
             statement.execute(criarPedidosAbertos);
+            statement.execute(criarMesas);
             garantirColunaDisponibilidade(statement);
+            garantirColunaEstadoMesa(statement);
         } catch (SQLException e) {
             throw new PersistenciaException("Não foi possível inicializar o banco de dados.", e);
         }
@@ -192,6 +203,16 @@ public class DatabaseService implements InterfacePersistencia {
     private void garantirColunaDisponibilidade(Statement statement) throws SQLException {
         try {
             statement.execute("ALTER TABLE produtos ADD COLUMN disponivel INTEGER NOT NULL DEFAULT 1");
+        } catch (SQLException e) {
+            if (!e.getMessage().toLowerCase().contains("duplicate column")) {
+                throw e;
+            }
+        }
+    }
+
+    private void garantirColunaEstadoMesa(Statement statement) throws SQLException {
+        try {
+            statement.execute("ALTER TABLE mesas ADD COLUMN estado TEXT NOT NULL DEFAULT 'LIVRE'");
         } catch (SQLException e) {
             if (!e.getMessage().toLowerCase().contains("duplicate column")) {
                 throw e;
@@ -1098,4 +1119,66 @@ public class DatabaseService implements InterfacePersistencia {
         }
     }
 
+    // ── UC03 – Mesas ─────────────────────────────────────────────────────────
+
+    /** Retorna as mesas e os estados persistidos em ordem numérica. */
+    @Override
+    public List<Mesa> carregarMesas() {
+        List<Mesa> mesas = new ArrayList<>();
+        String sql = "SELECT numero, estado FROM mesas ORDER BY numero";
+        try (Connection conexao = conectar();
+             PreparedStatement statement = conexao.prepareStatement(sql);
+             ResultSet resultado = statement.executeQuery()) {
+            while (resultado.next()) {
+                EstadoMesa estado;
+                try {
+                    estado = EstadoMesa.valueOf(resultado.getString("estado"));
+                } catch (IllegalArgumentException | NullPointerException e) {
+                    estado = EstadoMesa.LIVRE;
+                }
+                mesas.add(new Mesa(resultado.getInt("numero"), estado));
+            }
+            return mesas;
+        } catch (SQLException e) {
+            throw new PersistenciaException("Não foi possível carregar as mesas.", e);
+        }
+    }
+
+    /** Cria ou atualiza uma mesa e seu estado. */
+    @Override
+    public void salvarMesa(Mesa mesa) {
+        if (mesa == null) {
+            throw new IllegalArgumentException("Mesa não pode ser nula.");
+        }
+        String sql = """
+                INSERT INTO mesas (numero, estado) VALUES (?, ?)
+                ON CONFLICT(numero) DO UPDATE SET estado = excluded.estado
+                """;
+        try (Connection conexao = conectar();
+             PreparedStatement statement = conexao.prepareStatement(sql)) {
+            statement.setInt(1, mesa.getNumMesa());
+            statement.setString(2, mesa.getEstado().name());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new PersistenciaException(
+                    "Não foi possível salvar a mesa " + mesa.getNumMesa() + ".",
+                    e
+            );
+        }
+    }
+
+    /**
+     * Remove a mesa com o número informado.
+     */
+    @Override
+    public void removerMesa(int numero) {
+        String sql = "DELETE FROM mesas WHERE numero = ?";
+        try (Connection conexao = conectar();
+             PreparedStatement statement = conexao.prepareStatement(sql)) {
+            statement.setInt(1, numero);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new PersistenciaException("Não foi possível remover a mesa " + numero + ".", e);
+        }
+    }
 }
