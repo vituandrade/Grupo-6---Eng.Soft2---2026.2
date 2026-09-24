@@ -16,6 +16,7 @@ DELETE FROM venda_itens;
 DELETE FROM vendas;
 DELETE FROM pedidos_abertos;
 DELETE FROM comandas_abertas;
+DELETE FROM mesas;
 DELETE FROM movimentacoes_estoque;
 DELETE FROM itens_estoque;
 DELETE FROM produtos;
@@ -57,6 +58,13 @@ INSERT INTO movimentacoes_estoque (item_id, tipo, quantidade, data_hora)
 SELECT id, 'ENTRADA', quantidade, '2026-09-24T08:00:00'
 FROM itens_estoque
 WHERE quantidade > 0;
+
+-- Mapa de mesas. Os estados ocupados correspondem às comandas abaixo.
+INSERT INTO mesas (numero, estado)
+VALUES
+    (1, 'LIVRE'), (2, 'LIVRE'), (3, 'OCUPADA'), (4, 'LIVRE'),
+    (5, 'LIVRE'), (6, 'LIVRE'), (7, 'OCUPADA'), (8, 'LIVRE'),
+    (9, 'OCUPADA'), (10, 'LIVRE'), (11, 'OCUPADA'), (12, 'LIVRE');
 
 -- Comandas abertas exibidas no painel, nas mesas e na área de comandas.
 INSERT INTO comandas_abertas (id, cliente_nome, mesa_numero, data_abertura)

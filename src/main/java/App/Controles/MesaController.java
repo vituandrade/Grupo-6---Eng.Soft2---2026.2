@@ -1,8 +1,8 @@
 package App.Controles;
 
 import App.Persistencia.InterfacePersistencia;
-import App.Validacao.MesaValidator;
 
+import Model.Atendimento.EstadoMesa;
 import Model.Atendimento.Mesa;
 import Model.Atendimento.Comanda;
 import Model.Atendimento.Venda;
@@ -12,24 +12,30 @@ import Model.Sistema.Config;
 import Model.Usuarios.Interno;
 import Model.Usuarios.Usuario;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.TilePane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class MesaController extends BaseController {
 
@@ -135,6 +141,10 @@ public class MesaController extends BaseController {
                 this.listaDeProdutos,
                 usuarios
         );
+        // Uma comanda restaurada pode transformar uma mesa livre em ocupada.
+        for (Mesa mesa : listaDeMesas) {
+            persistenceService.salvarMesa(mesa);
+        }
     }
 
     // ── Carregamento ────────────────────────────────────────────────────────
@@ -148,21 +158,19 @@ public class MesaController extends BaseController {
         painelMesas.getChildren().clear();
         this.listaDeMesas.clear();
 
-        List<Integer> numeros = new ArrayList<>(persistenceService.carregarMesas());
+        List<Mesa> mesasPersistidas = new ArrayList<>(persistenceService.carregarMesas());
 
-        if (numeros.isEmpty()) {
+        if (mesasPersistidas.isEmpty()) {
             // Carga inicial: semeia a partir da configuração global
             int totalConfig = this.config.getNumeroDeMesas();
             for (int i = 1; i <= totalConfig; i++) {
-                persistenceService.salvarMesa(i);
-                numeros.add(i);
+                Mesa mesa = new Mesa(i);
+                persistenceService.salvarMesa(mesa);
+                mesasPersistidas.add(mesa);
             }
         }
 
-        for (int numero : numeros) {
-            Mesa mesa = new Mesa(numero);
-            this.listaDeMesas.add(mesa);
-        }
+        this.listaDeMesas.addAll(mesasPersistidas);
     }
 
     private void atualizarVisualDasMesas() {
@@ -177,104 +185,59 @@ public class MesaController extends BaseController {
     }
 
     private VBox criarMesaVisual(Mesa mesa) {
-        VBox box = new VBox(10);
+        VBox box = new VBox(12);
+        box.getStyleClass().add("table-card");
+        box.setPrefSize(185, 125);
 
-        String estiloFundo;
-        String statusTexto;
+        Label titulo = new Label(String.format("Mesa %02d", mesa.getNumMesa()));
+        titulo.getStyleClass().add("table-title");
 
-        Button botaoAcao = new Button();
+        Label status = new Label(mesa.getEstado().getDescricao());
+        status.setMaxWidth(Double.MAX_VALUE);
+        status.getStyleClass().addAll("status-pill", classeCssDoEstado(mesa.getEstado()));
 
-        if (mesa.isAguardandoPagamento()) {
-            estiloFundo =
-                    "-fx-background-color: #fff3cd;";
+        String detalhe = mesa.getComandas().stream()
+                .filter(comanda -> !comanda.isFechada())
+                .findFirst()
+                .map(comanda -> "Comanda #" + comanda.getId())
+                .orElse("Sem comanda");
+        Label detalheLabel = new Label(detalhe);
+        detalheLabel.getStyleClass().add("table-detail");
 
-            statusTexto =
-                    "Aguardando Pagamento";
-
-            botaoAcao.setText("Gerenciar");
-
-            botaoAcao.setOnAction(
-                    e -> abrirMesaEspecifica(
-                            mesa.getNumMesa()
-                    )
-            );
-
-        } else if (mesa.isOcupada()) {
-            estiloFundo =
-                    "-fx-background-color: #f8d7da;";
-
-            statusTexto =
-                    "Ocupada (" +
-                    mesa.getComandas().size() +
-                    ")";
-
-            botaoAcao.setText("Gerenciar");
-
-            botaoAcao.setOnAction(
-                    e -> abrirMesaEspecifica(
-                            mesa.getNumMesa()
-                    )
-            );
-
-        } else {
-            estiloFundo =
-                    "-fx-background-color: #d4edda;";
-
-            statusTexto =
-                    "Livre";
-
-            botaoAcao.setText("Abrir Mesa");
-
-            botaoAcao.setOnAction(
-                    e -> abrirMesaEspecifica(
-                            mesa.getNumMesa()
-                    )
-            );
+        if (usuarioLogado instanceof Interno) {
+            status.setTooltip(new Tooltip("Clique para alterar o estado"));
+            status.setOnMouseClicked(evento -> {
+                evento.consume();
+                abrirAlteracaoEstado(mesa);
+            });
         }
 
-        box.setStyle(
-                "-fx-border-color: #666;" +
-                "-fx-border-radius: 5;" +
-                "-fx-padding: 10;" +
-                estiloFundo
-        );
-
-        box.setPrefSize(
-                120,
-                100
-        );
-
-        Label label =
-                new Label(
-                        "Mesa " +
-                        mesa.getNumMesa()
-                );
-
-        label.setStyle(
-                "-fx-font-weight: bold;"
-        );
-
-        Label statusLabel =
-                new Label(
-                        statusTexto
-                );
-
-        box.getChildren().addAll(
-                label,
-                statusLabel,
-                botaoAcao
-        );
+        box.setOnMouseClicked(evento -> abrirMesaEspecifica(mesa.getNumMesa()));
+        box.getChildren().addAll(titulo, status, detalheLabel);
 
         return box;
+    }
+
+    private String classeCssDoEstado(EstadoMesa estado) {
+        return switch (estado) {
+            case LIVRE -> "status-livre";
+            case OCUPADA -> "status-ocupada";
+            case AGUARDANDO_FECHAMENTO -> "status-aguardando";
+        };
     }
 
     private void abrirMesaEspecifica(
             int numeroMesa
     ) {
-        Mesa mesaSelecionada =
-                this.listaDeMesas.get(
-                        numeroMesa - 1
-                );
+        Mesa mesaSelecionada = this.listaDeMesas.stream()
+                .filter(mesa -> mesa.getNumMesa() == numeroMesa)
+                .findFirst()
+                .orElse(null);
+
+        if (mesaSelecionada == null) {
+            mostrarAlerta("Mesa", "A mesa selecionada não foi encontrada.");
+            return;
+        }
 
         try {
             FXMLLoader loader =
@@ -328,34 +291,116 @@ public class MesaController extends BaseController {
      */
     @FXML
     private void adicionarNovaMesa() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Nova Mesa");
-        dialog.setHeaderText("Cadastrar nova mesa");
-        dialog.setContentText("Número da mesa:");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/App/CadastrarMesa.fxml"));
+            Node formulario = loader.load();
+            CadastrarMesaController controller = loader.getController();
 
-        Optional<String> resposta = dialog.showAndWait();
-        if (resposta.isEmpty()) return;
+            ButtonType salvar = new ButtonType("SALVAR", ButtonBar.ButtonData.OK_DONE);
+            ButtonType cancelar = new ButtonType("CANCELAR", ButtonBar.ButtonData.CANCEL_CLOSE);
+            Dialog<ButtonType> dialogo = criarDialogo("Cadastrar nova mesa", formulario);
+            dialogo.getDialogPane().getButtonTypes().addAll(cancelar, salvar);
 
-        String texto = resposta.get().trim();
-        MesaValidator.Resultado resultado = MesaValidator.validarTexto(texto, this.listaDeMesas);
+            Button botaoSalvar = (Button) dialogo.getDialogPane().lookupButton(salvar);
+            estilizarBotoesDialogo(dialogo, salvar, cancelar);
+            botaoSalvar.addEventFilter(ActionEvent.ACTION, evento -> {
+                if (!controller.validar(listaDeMesas).valido()) {
+                    evento.consume();
+                    return;
+                }
 
-        if (!resultado.valido()) {
-            mostrarAlerta("Número inválido", resultado.mensagem());
-            return;
+                Mesa novaMesa = new Mesa(controller.getNumero());
+                try {
+                    persistenceService.salvarMesa(novaMesa);
+                    listaDeMesas.add(novaMesa);
+                    listaDeMesas.sort((a, b) -> Integer.compare(a.getNumMesa(), b.getNumMesa()));
+                    atualizarVisualDasMesas();
+                } catch (RuntimeException erro) {
+                    evento.consume();
+                    controller.exibirFalhaDePersistencia();
+                }
+            });
+            dialogo.showAndWait();
+        } catch (IOException e) {
+            mostrarAlerta("Erro", "Não foi possível abrir o cadastro de mesa.");
         }
+    }
 
-        int numero = Integer.parseInt(texto);
-        Mesa novaMesa = new Mesa(numero);
-        this.listaDeMesas.add(novaMesa);
-        persistenceService.salvarMesa(numero);
-        atualizarVisualDasMesas();
+    private void abrirAlteracaoEstado(Mesa mesa) {
+        Label estadoAtual = new Label("Estado atual: " + mesa.getEstado());
+        estadoAtual.getStyleClass().add("dialog-subtitle");
+
+        ComboBox<EstadoMesa> seletor = new ComboBox<>();
+        seletor.getItems().setAll(EstadoMesa.values());
+        seletor.setValue(mesa.getEstado());
+        seletor.setMaxWidth(Double.MAX_VALUE);
+        seletor.setPrefHeight(42);
+        seletor.getStyleClass().add("estado-mesa-select");
+
+        Label erro = new Label();
+        erro.setWrapText(true);
+        erro.setMinHeight(34);
+        erro.getStyleClass().add("form-error");
+
+        VBox conteudo = new VBox(10, estadoAtual, seletor, erro);
+        conteudo.setPadding(new Insets(4));
+        conteudo.setPrefWidth(430);
+
+        ButtonType salvar = new ButtonType("SALVAR", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelar = new ButtonType("CANCELAR", ButtonBar.ButtonData.CANCEL_CLOSE);
+        Dialog<ButtonType> dialogo = criarDialogo(
+                String.format("Alterar estado da Mesa %02d", mesa.getNumMesa()),
+                conteudo
+        );
+        dialogo.getDialogPane().getButtonTypes().addAll(cancelar, salvar);
+        estilizarBotoesDialogo(dialogo, salvar, cancelar);
+
+        Button botaoSalvar = (Button) dialogo.getDialogPane().lookupButton(salvar);
+        botaoSalvar.addEventFilter(ActionEvent.ACTION, evento -> {
+            EstadoMesa novoEstado = seletor.getValue();
+            try {
+                mesa.validarAlteracao(novoEstado);
+
+                // Persiste primeiro: se o banco falhar, o cartão mantém o estado anterior.
+                persistenceService.salvarMesa(new Mesa(mesa.getNumMesa(), novoEstado));
+                mesa.alterarEstado(novoEstado);
+                atualizarVisualDasMesas();
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                evento.consume();
+                erro.setText(e.getMessage());
+            } catch (RuntimeException e) {
+                evento.consume();
+                erro.setText("Não foi possível gravar o novo estado. Tente novamente.");
+            }
+        });
+        dialogo.showAndWait();
+    }
+
+    private Dialog<ButtonType> criarDialogo(String titulo, Node conteudo) {
+        Dialog<ButtonType> dialogo = new Dialog<>();
+        dialogo.setTitle(titulo);
+        dialogo.setHeaderText(titulo);
+        dialogo.initStyle(StageStyle.TRANSPARENT);
+        dialogo.initOwner(painelRaiz.getScene().getWindow());
+        dialogo.getDialogPane().setContent(conteudo);
+        dialogo.getDialogPane().getStylesheets().add(
+                getClass().getResource("/App/Mesa.css").toExternalForm()
+        );
+        return dialogo;
+    }
+
+    private void estilizarBotoesDialogo(
+            Dialog<ButtonType> dialogo,
+            ButtonType salvar,
+            ButtonType cancelar
+    ) {
+        dialogo.getDialogPane().lookupButton(salvar).getStyleClass().add("save-button");
+        dialogo.getDialogPane().lookupButton(cancelar).getStyleClass().add("cancel-button");
     }
 
     @FXML
     public void abrirNovaComanda() {
         try {
-            sincronizarMesasComConfig();
-
             FXMLLoader loader =
                     new FXMLLoader(
                             getClass().getResource(
@@ -489,11 +534,17 @@ public class MesaController extends BaseController {
             FechamentoContaController controller =
                     loader.getController();
 
+            Mesa mesaDaComanda = encontrarMesaDaComanda(comanda);
+            if (mesaDaComanda != null) {
+                mesaDaComanda.setAguardandoPagamento(true);
+                persistirMesa(mesaDaComanda);
+            }
+
             controller.inicializar(
                     comanda,
                     this.usuarioLogado,
                     this,
-                    encontrarMesaDaComanda(comanda)
+                    mesaDaComanda
             );
 
             mostrarTelaCompleta(root);
@@ -503,7 +554,7 @@ public class MesaController extends BaseController {
                     "Comandas"
             );
 
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             e.printStackTrace();
 
             mostrarAlerta(
@@ -553,6 +604,16 @@ public class MesaController extends BaseController {
                 mesa,
                 this.usuarioLogado
         );
+        if (mesa != null) {
+            this.persistenceService.salvarMesa(mesa);
+        }
+    }
+
+    public void persistirMesa(Mesa mesa) {
+        if (mesa == null || this.persistenceService == null) {
+            return;
+        }
+        this.persistenceService.salvarMesa(mesa);
     }
 
     private Mesa encontrarMesaDaComanda(
@@ -574,9 +635,8 @@ public class MesaController extends BaseController {
 
     @FXML
     private void abrirDashboardMesas() {
-        sincronizarMesasComConfig();
-
         restaurarBarraSuperior();
+        atualizarVisualDasMesas();
 
         painelConteudo.setCenter(
                 this.centroOriginalMesas
@@ -727,52 +787,9 @@ public class MesaController extends BaseController {
         }
     }
 
-    private void sincronizarMesasComConfig() {
-        int numeroAtualNaLista =
-                this.listaDeMesas.size();
-
-        int numeroDesejadoDoConfig =
-                this.config.getNumeroDeMesas();
-
-        if (numeroAtualNaLista ==
-                numeroDesejadoDoConfig) {
-
-            atualizarVisualDasMesas();
-            return;
-        }
-
-        if (numeroDesejadoDoConfig >
-                numeroAtualNaLista) {
-
-            for (
-                    int i = numeroAtualNaLista + 1;
-                    i <= numeroDesejadoDoConfig;
-                    i++
-            ) {
-                Mesa novaMesa =
-                        new Mesa(i);
-
-                this.listaDeMesas.add(
-                        novaMesa
-                );
-            }
-
-        } else {
-
-            this.listaDeMesas.removeIf(
-                    mesa ->
-                            mesa.getNumMesa() >
-                            numeroDesejadoDoConfig
-            );
-        }
-
-        atualizarVisualDasMesas();
-    }
-
     @FXML
     public void abrirListaComandas() {
         try {
-            sincronizarMesasComConfig();
             restaurarBarraSuperior();
             exibirAcaoNovaComanda(true);
 

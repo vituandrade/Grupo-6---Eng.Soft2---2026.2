@@ -122,18 +122,6 @@
                                    -fx-background-radius: 5;
                                    -fx-padding: 9 15 9 15;" />
 
-                    <!-- UC03: Cadastrar nova mesa (visível só para Interno). -->
-                    <Button fx:id="botaoNovaMesa"
-                            managed="false"
-                            onAction="#adicionarNovaMesa"
-                            text="+ Nova Mesa"
-                            visible="false"
-                            style="-fx-background-color: #204b55;
-                                   -fx-text-fill: white;
-                                   -fx-font-weight: bold;
-                                   -fx-background-radius: 5;
-                                   -fx-padding: 9 15 9 15;" />
-
                     <!-- USUÁRIO -->
                     <Label fx:id="labelUsuario"
                            styleClass="user-label"
@@ -144,19 +132,30 @@
             </top>
 
             <center>
-                <ScrollPane fitToHeight="true"
-                            fitToWidth="true"
-                            styleClass="content-scroll">
+                <VBox spacing="18.0" styleClass="tables-content">
+                    <HBox alignment="CENTER_LEFT">
+                        <Label styleClass="section-title" text="Mapa de mesas" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button fx:id="botaoNovaMesa"
+                                managed="false"
+                                onAction="#adicionarNovaMesa"
+                                styleClass="primary-button"
+                                text="+ NOVA MESA"
+                                visible="false" />
+                    </HBox>
 
-                    <content>
-                        <TilePane fx:id="painelMesas"
-                                  hgap="20.0"
-                                  vgap="20.0"
-                                  styleClass="tables-grid">
-                        </TilePane>
-                    </content>
-
-                </ScrollPane>
+                    <ScrollPane fitToWidth="true"
+                                styleClass="content-scroll"
+                                VBox.vgrow="ALWAYS">
+                        <content>
+                            <TilePane fx:id="painelMesas"
+                                      hgap="20.0"
+                                      prefColumns="4"
+                                      vgap="20.0"
+                                      styleClass="tables-grid" />
+                        </content>
+                    </ScrollPane>
+                </VBox>
             </center>
 
         </BorderPane>

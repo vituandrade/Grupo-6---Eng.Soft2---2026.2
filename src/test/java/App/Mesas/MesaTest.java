@@ -1,6 +1,7 @@
 package App.Mesas;
 
 import Model.Atendimento.Comanda;
+import Model.Atendimento.EstadoMesa;
 import Model.Atendimento.Mesa;
 import org.junit.jupiter.api.Test;
 
@@ -105,5 +106,29 @@ class MesaTest {
         mesa.setAguardandoPagamento(false);
         assertFalse(mesa.isOcupada());
         assertFalse(mesa.isAguardandoPagamento());
+    }
+
+    @Test
+    void naoPermitePularEstadoIntermediario() {
+        Mesa mesa = new Mesa(8);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> mesa.alterarEstado(EstadoMesa.AGUARDANDO_FECHAMENTO)
+        );
+        assertEquals(EstadoMesa.LIVRE, mesa.getEstado());
+    }
+
+    @Test
+    void naoPermiteLiberarMesaComComandaAberta() {
+        Mesa mesa = new Mesa(9);
+        mesa.adicionarComanda(new Comanda());
+        mesa.alterarEstado(EstadoMesa.AGUARDANDO_FECHAMENTO);
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> mesa.alterarEstado(EstadoMesa.LIVRE)
+        );
+        assertEquals(EstadoMesa.AGUARDANDO_FECHAMENTO, mesa.getEstado());
     }
 }

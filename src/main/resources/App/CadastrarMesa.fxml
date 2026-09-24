@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox prefWidth="430.0" spacing="10.0" styleClass="cadastro-mesa"
+      stylesheets="@Mesa.css" xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="App.Controles.CadastrarMesaController">
+    <padding>
+        <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+    </padding>
+
+    <Label styleClass="dialog-subtitle"
+           text="Informe um número positivo que ainda não esteja em uso." />
+    <Label styleClass="form-label" text="Número da mesa *">
+        <VBox.margin><Insets top="8.0" /></VBox.margin>
+    </Label>
+    <TextField fx:id="campoNumero" prefHeight="42.0" promptText="Ex.: 09" />
+    <Label fx:id="mensagemValidacao" minHeight="34.0"
+           styleClass="form-error" wrapText="true" />
+</VBox>

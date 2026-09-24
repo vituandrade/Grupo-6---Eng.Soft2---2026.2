@@ -1,6 +1,7 @@
 package App.Persistencia;
 
 import Model.Atendimento.Venda;
+import Model.Atendimento.Mesa;
 import Model.Estoque.ItemEstoque;
 import Model.Estoque.TipoMovimentacao;
 import Model.Sistema.Config;
@@ -67,18 +68,13 @@ public interface InterfacePersistencia {
 
     // ── UC03 – Mesas ─────────────────────────────────────────────────────────
 
-    /**
-     * Retorna os números de todas as mesas cadastradas, em ordem crescente.
-     */
-    default List<Integer> carregarMesas() {
+    /** Retorna as mesas cadastradas, com seus estados, em ordem numérica. */
+    default List<Mesa> carregarMesas() {
         return List.of();
     }
 
-    /**
-     * Persiste uma nova mesa com o número informado.
-     * Operação idempotente (ON CONFLICT IGNORE).
-     */
-    default void salvarMesa(int numero) {
+    /** Cria ou atualiza uma mesa e seu estado atual. */
+    default void salvarMesa(Mesa mesa) {
         // implementação opcional para adaptadores sem banco
     }
 
@@ -89,4 +85,3 @@ public interface InterfacePersistencia {
         // implementação opcional para adaptadores sem banco
     }
 }
-
