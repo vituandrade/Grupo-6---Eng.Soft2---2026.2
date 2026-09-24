@@ -3,6 +3,7 @@ package App.Persistencia;
 import Model.Estoque.ItemEstoque;
 import Model.Estoque.TipoMovimentacao;
 import Model.Produtos.ItemCardapio;
+import Model.Produtos.Alimentos.Refeicao;
 import Model.Produtos.Produto;
 import Model.Sistema.Config;
 import Model.Usuarios.Garcom;
@@ -93,6 +94,43 @@ class DatabaseServiceTest {
         assertEquals("Farinha", item.getNome());
         assertEquals("kg", item.getUnidadeMedida());
         assertEquals(12.5, item.getQuantidade());
+    }
+
+    @Test
+    void itemDeCardapioRecuperaSaldoSincronizado() {
+        DatabaseService banco = criarBanco();
+        ItemCardapio produto = new ItemCardapio(
+                "Coca-Cola", "Bebida", "", 8.0, true
+        );
+        produto.setEstoque(6);
+
+        banco.salvarProdutos(List.of(produto));
+
+        assertEquals(6, banco.carregarProdutos().get(0).getEstoque());
+        assertEquals(6, banco.carregarItensEstoque().get(0).getQuantidade());
+    }
+
+    @Test
+    void estoqueDoProdutoEEstoqueDoModuloPermanecemSincronizados() {
+        DatabaseService banco = criarBanco();
+        Refeicao produto = new Refeicao(
+                "Picanha", "", 80.0, 10, "Prato"
+        );
+
+        banco.salvarProdutos(List.of(produto));
+        assertEquals(10, banco.carregarItensEstoque().get(0).getQuantidade());
+        assertEquals(10, banco.carregarProdutos().get(0).getEstoque());
+
+        banco.registrarMovimentacaoEstoque(
+                banco.carregarItensEstoque().get(0).getId(),
+                "Picanha",
+                "un.",
+                TipoMovimentacao.SAIDA,
+                3
+        );
+
+        assertEquals(7, banco.carregarItensEstoque().get(0).getQuantidade());
+        assertEquals(7, banco.carregarProdutos().get(0).getEstoque());
     }
 
     @Test

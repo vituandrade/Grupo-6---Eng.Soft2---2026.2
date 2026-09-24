@@ -6,57 +6,139 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?> <?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="painelRaiz" prefHeight="720.0" prefWidth="1180.0" styleClass="app-shell"
-            stylesheets="@Mesa.css" xmlns="http://javafx.com/javafx/17"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="App.Controles.MesaController">
+<BorderPane fx:id="painelRaiz"
+            prefHeight="720.0"
+            prefWidth="1180.0"
+            styleClass="app-shell"
+            stylesheets="@Mesa.css"
+            xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="App.Controles.MesaController">
 
     <left>
-        <VBox prefWidth="220.0" styleClass="sidebar">
+        <VBox prefWidth="220.0"
+              styleClass="sidebar">
+
             <padding>
-                <Insets bottom="28.0" left="14.0" right="14.0" top="30.0" />
+                <Insets bottom="28.0"
+                        left="14.0"
+                        right="14.0"
+                        top="30.0" />
             </padding>
-            <VBox spacing="2.0" styleClass="brand-block">
-                <Label styleClass="brand-title" text="MESA CERTA" />
-                <Label styleClass="brand-subtitle" text="Gestão de restaurante" />
+
+            <VBox spacing="2.0"
+                  styleClass="brand-block">
+
+                <Label styleClass="brand-title"
+                       text="MESA CERTA" />
+
+                <Label styleClass="brand-subtitle"
+                       text="Gestão de restaurante" />
+
             </VBox>
 
-            <VBox spacing="8.0" styleClass="navigation">
-                <Button fx:id="botaoProdutos" managed="false" maxWidth="Infinity" onAction="#abrirProdutos"
-                        styleClass="menu-button" text="Cardápio" visible="false" />
-                <Button fx:id="botaoMesas" maxWidth="Infinity" onAction="#abrirDashboardMesas"
-                        styleClass="menu-button, menu-button-active" text="Mesas" />
-                <Button fx:id="botaoComandas" maxWidth="Infinity" onAction="#abrirListaComandas"
-                        styleClass="menu-button" text="Comandas" />
-                <Button fx:id="botaoEstoque" managed="false" maxWidth="Infinity" onAction="#abrirEstoque"
-                        styleClass="menu-button" text="Estoque" visible="false" />
+            <VBox spacing="8.0"
+                  styleClass="navigation">
+
+                <Button fx:id="botaoProdutos"
+                        managed="false"
+                        maxWidth="Infinity"
+                        onAction="#abrirProdutos"
+                        styleClass="menu-button"
+                        text="Cardápio"
+                        visible="false" />
+
+                <Button fx:id="botaoMesas"
+                        maxWidth="Infinity"
+                        onAction="#abrirDashboardMesas"
+                        styleClass="menu-button, menu-button-active"
+                        text="Mesas" />
+
+                <Button fx:id="botaoComandas"
+                        maxWidth="Infinity"
+                        onAction="#abrirListaComandas"
+                        styleClass="menu-button"
+                        text="Comandas" />
+
+                <Button fx:id="botaoEstoque"
+                        managed="false"
+                        maxWidth="Infinity"
+                        onAction="#abrirEstoque"
+                        styleClass="menu-button"
+                        text="Estoque"
+                        visible="false" />
+
+                <Button fx:id="botaoHistorico"
+                        maxWidth="Infinity"
+                        onAction="#abrirHistoricoVendas"
+                        styleClass="menu-button"
+                        text="Histórico" />
+
             </VBox>
+
         </VBox>
     </left>
 
     <center>
         <BorderPane>
+
             <top>
-                <HBox alignment="CENTER_LEFT" minHeight="72.0" styleClass="top-bar">
+                <HBox alignment="CENTER_LEFT"
+                      minHeight="72.0"
+                      styleClass="top-bar">
+
                     <padding>
-                        <Insets left="32.0" right="32.0" />
+                        <Insets left="32.0"
+                                right="32.0" />
                     </padding>
-                    <Label fx:id="labelTituloPagina" styleClass="page-title" text="Mesas" />
+
+                    <!-- TÍTULO -->
+                    <Label fx:id="labelTituloPagina"
+                           styleClass="page-title"
+                           text="Mesas" />
+
+                    <!-- ESPAÇO ENTRE O TÍTULO E AS AÇÕES -->
                     <Region HBox.hgrow="ALWAYS" />
-                    <Button onAction="#abrirNovaComanda" text="Abrir comanda" style="-fx-font-weight: bold;" />
-                    <Label fx:id="labelUsuario" styleClass="user-label" text="Funcionário autorizado" />
+
+                    <!-- COMANDA SEM MESA -->
+                    <Button fx:id="botaoNovaComanda"
+                            onAction="#abrirNovaComanda"
+                            text="+ COMANDA SEM MESA"
+                            style="-fx-background-color: #F7941D;
+                                   -fx-text-fill: white;
+                                   -fx-font-weight: bold;
+                                   -fx-background-radius: 5;
+                                   -fx-padding: 9 15 9 15;" />
+
+                    <!-- USUÁRIO -->
+                    <Label fx:id="labelUsuario"
+                           styleClass="user-label"
+                           text="Funcionário autorizado"
+                           style="-fx-padding: 0 0 0 12;" />
+
                 </HBox>
             </top>
+
             <center>
-                <ScrollPane fitToHeight="true" fitToWidth="true" styleClass="content-scroll">
+                <ScrollPane fitToHeight="true"
+                            fitToWidth="true"
+                            styleClass="content-scroll">
+
                     <content>
-                        <TilePane fx:id="painelMesas" hgap="20.0" vgap="20.0" styleClass="tables-grid">
+                        <TilePane fx:id="painelMesas"
+                                  hgap="20.0"
+                                  vgap="20.0"
+                                  styleClass="tables-grid">
                         </TilePane>
                     </content>
+
                 </ScrollPane>
             </center>
+
         </BorderPane>
     </center>
 

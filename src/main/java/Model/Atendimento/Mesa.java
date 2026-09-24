@@ -43,7 +43,7 @@ public class Mesa {
     }
 
     public boolean isOcupada() {
-        return !this.comandas.isEmpty();
+        return temComandaAberta();
     }
 
     public boolean isAguardandoPagamento() {

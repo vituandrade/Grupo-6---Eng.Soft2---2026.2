@@ -1,0 +1,51 @@
+.historico-table {
+    -fx-background-color: white;
+    -fx-background-insets: 0;
+    -fx-border-color: #E0E6E8;
+    -fx-border-radius: 4px;
+    -fx-table-cell-border-color: #EEF1F2;
+    -fx-font-family: "Arial";
+    -fx-font-size: 14px;
+}
+
+.historico-table .column-header-background {
+    -fx-background-color: #0E2930;
+}
+
+.historico-table .column-header,
+.historico-table .filler {
+    -fx-background-color: #0E2930;
+    -fx-border-color: transparent;
+    -fx-size: 44px;
+}
+
+.historico-table .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER-LEFT;
+}
+
+.historico-table .table-row-cell {
+    -fx-cell-size: 44px;
+    -fx-background-color: white;
+}
+
+.historico-table .table-row-cell:filled:hover {
+    -fx-background-color: #F6F8F9;
+}
+
+.historico-table .table-cell {
+    -fx-text-fill: #526069;
+    -fx-border-color: transparent transparent #EEF1F2 transparent;
+    -fx-padding: 10px 12px;
+    -fx-font-size: 13px;
+}
+
+.text-field, .combo-box-base {
+    -fx-background-color: white;
+    -fx-border-color: #D5DEE2;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-font-size: 13px;
+}
