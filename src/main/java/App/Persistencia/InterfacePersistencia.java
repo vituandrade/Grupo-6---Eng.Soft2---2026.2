@@ -66,6 +66,31 @@ public interface InterfacePersistencia {
     ) {
     }
 
+    record ResumoVendas(double totalVendido, long comandasFechadas, double ticketMedio) {
+    }
+
+    record ItemRelatorio(String produto, double quantidade, double valorTotal) {
+    }
+
+    record EstoqueRelatorio(String produto, String unidadeMedida, double quantidade, String situacao) {
+    }
+
+    default ResumoVendas gerarResumoVendas(LocalDate dataInicial, LocalDate dataFinal) {
+        return new ResumoVendas(0.0, 0L, 0.0);
+    }
+
+    default List<ItemRelatorio> carregarItensMaisVendidos() {
+        return List.of();
+    }
+
+    default List<ItemRelatorio> carregarConsumoPorPeriodo(LocalDate dataInicial, LocalDate dataFinal) {
+        return List.of();
+    }
+
+    default List<EstoqueRelatorio> carregarRelatorioEstoque() {
+        return List.of();
+    }
+
     // ── UC03 – Mesas ─────────────────────────────────────────────────────────
 
     /** Retorna as mesas cadastradas, com seus estados, em ordem numérica. */

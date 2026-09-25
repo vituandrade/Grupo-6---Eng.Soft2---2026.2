@@ -74,6 +74,9 @@ public class MesaController extends BaseController {
     private Button botaoHistorico;
 
     @FXML
+    private Button botaoRelatorios;
+
+    @FXML
     private Button botaoNovaComanda;
 
     // UC03 – botão cadastrar nova mesa (visível só para Interno)
@@ -742,6 +745,24 @@ public class MesaController extends BaseController {
     }
 
     @FXML
+    private void abrirRelatorios() {
+        try {
+            restaurarBarraSuperior();
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/App/RelatoriosView.fxml")
+            );
+            Node painelRelatorios = loader.load();
+            RelatoriosController controller = loader.getController();
+            controller.inicializar(this.persistenceService);
+            painelConteudo.setCenter(painelRelatorios);
+            selecionarMenu(botaoRelatorios, "Relatórios");
+        } catch (IOException | RuntimeException e) {
+            e.printStackTrace();
+            mostrarAlerta("Erro", "Não foi possível carregar os relatórios.");
+        }
+    }
+
+    @FXML
     public void abrirEstoque() {
         if (usuarioLogado == null || !usuarioLogado.AcessoEstoque()) {
             mostrarAlerta("Acesso restrito", "Seu usuário não possui permissão para movimentar o estoque.");
@@ -887,7 +908,8 @@ public class MesaController extends BaseController {
                         botaoComandas,
                         botaoProdutos,
                         botaoEstoque,
-                        botaoHistorico
+                        botaoHistorico,
+                        botaoRelatorios
                 )
         ) {
             botao.getStyleClass().remove(

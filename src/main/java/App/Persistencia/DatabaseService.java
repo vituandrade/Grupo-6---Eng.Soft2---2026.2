@@ -1119,6 +1119,155 @@ public class DatabaseService implements InterfacePersistencia {
         }
     }
 
+    @Override
+    public InterfacePersistencia.ResumoVendas gerarResumoVendas(
+            LocalDate dataInicial,
+            LocalDate dataFinal
+    ) {
+        StringBuilder sql = new StringBuilder("""
+                SELECT COALESCE(SUM(total), 0) AS total_vendido,
+                       COUNT(*) AS comandas_fechadas,
+                       COALESCE(AVG(total), 0) AS ticket_medio
+                FROM vendas
+                WHERE 1 = 1
+                """);
+        List<String> parametros = new ArrayList<>();
+
+        if (dataInicial != null) {
+            sql.append(" AND data_hora >= ?");
+            parametros.add(DATA_HORA_BANCO.format(dataInicial.atStartOfDay()));
+        }
+        if (dataFinal != null) {
+            sql.append(" AND data_hora < ?");
+            parametros.add(DATA_HORA_BANCO.format(dataFinal.plusDays(1).atStartOfDay()));
+        }
+
+        try (Connection conexao = conectar();
+             PreparedStatement statement = conexao.prepareStatement(sql.toString())) {
+            for (int i = 0; i < parametros.size(); i++) {
+                statement.setString(i + 1, parametros.get(i));
+            }
+            try (ResultSet resultado = statement.executeQuery()) {
+                if (!resultado.next()) {
+                    return new InterfacePersistencia.ResumoVendas(0.0, 0L, 0.0);
+                }
+                return new InterfacePersistencia.ResumoVendas(
+                        resultado.getDouble("total_vendido"),
+                        resultado.getLong("comandas_fechadas"),
+                        resultado.getDouble("ticket_medio")
+                );
+            }
+        } catch (SQLException e) {
+            throw new PersistenciaException("Não foi possível gerar o resumo de vendas.", e);
+        }
+    }
+
+    @Override
+    public List<InterfacePersistencia.ItemRelatorio> carregarItensMaisVendidos() {
+        String sql = """
+                SELECT produto_nome,
+                       COALESCE(SUM(quantidade), 0) AS quantidade,
+                       COALESCE(SUM(subtotal), 0) AS valor_total
+                FROM venda_itens
+                GROUP BY produto_nome
+                ORDER BY quantidade DESC, valor_total DESC, produto_nome
+                """;
+        return carregarItensRelatorio(sql, List.of());
+    }
+
+    @Override
+    public List<InterfacePersistencia.ItemRelatorio> carregarConsumoPorPeriodo(
+            LocalDate dataInicial,
+            LocalDate dataFinal
+    ) {
+        StringBuilder sql = new StringBuilder("""
+                SELECT vi.produto_nome,
+                       COALESCE(SUM(vi.quantidade), 0) AS quantidade,
+                       COALESCE(SUM(vi.subtotal), 0) AS valor_total
+                FROM venda_itens vi
+                JOIN vendas v ON v.id = vi.venda_id
+                WHERE 1 = 1
+                """);
+        List<String> parametros = new ArrayList<>();
+
+        if (dataInicial != null) {
+            sql.append(" AND v.data_hora >= ?");
+            parametros.add(DATA_HORA_BANCO.format(dataInicial.atStartOfDay()));
+        }
+        if (dataFinal != null) {
+            sql.append(" AND v.data_hora < ?");
+            parametros.add(DATA_HORA_BANCO.format(dataFinal.plusDays(1).atStartOfDay()));
+        }
+
+        sql.append("""
+                GROUP BY vi.produto_nome
+                ORDER BY quantidade DESC, valor_total DESC, vi.produto_nome
+                """);
+        return carregarItensRelatorio(sql.toString(), parametros);
+    }
+
+    private List<InterfacePersistencia.ItemRelatorio> carregarItensRelatorio(
+            String sql,
+            List<String> parametros
+    ) {
+        List<InterfacePersistencia.ItemRelatorio> itens = new ArrayList<>();
+        try (Connection conexao = conectar();
+             PreparedStatement statement = conexao.prepareStatement(sql)) {
+            for (int i = 0; i < parametros.size(); i++) {
+                statement.setString(i + 1, parametros.get(i));
+            }
+            try (ResultSet resultado = statement.executeQuery()) {
+                while (resultado.next()) {
+                    itens.add(new InterfacePersistencia.ItemRelatorio(
+                            resultado.getString("produto_nome"),
+                            resultado.getDouble("quantidade"),
+                            resultado.getDouble("valor_total")
+                    ));
+                }
+            }
+            return itens;
+        } catch (SQLException e) {
+            throw new PersistenciaException("Não foi possível gerar o relatório de itens.", e);
+        }
+    }
+
+    @Override
+    public List<InterfacePersistencia.EstoqueRelatorio> carregarRelatorioEstoque() {
+        List<InterfacePersistencia.EstoqueRelatorio> itens = new ArrayList<>();
+        String sql = """
+                SELECT nome, unidade_medida, quantidade
+                FROM itens_estoque
+                ORDER BY
+                    CASE
+                        WHEN quantidade <= 0 THEN 0
+                        WHEN quantidade <= 5 THEN 1
+                        ELSE 2
+                    END,
+                    nome
+                """;
+        try (Connection conexao = conectar();
+             PreparedStatement statement = conexao.prepareStatement(sql);
+             ResultSet resultado = statement.executeQuery()) {
+            while (resultado.next()) {
+                double quantidade = resultado.getDouble("quantidade");
+                String situacao = quantidade <= 0
+                        ? "Sem estoque"
+                        : quantidade <= 5
+                        ? "Estoque baixo"
+                        : "Normal";
+                itens.add(new InterfacePersistencia.EstoqueRelatorio(
+                        resultado.getString("nome"),
+                        resultado.getString("unidade_medida"),
+                        quantidade,
+                        situacao
+                ));
+            }
+            return itens;
+        } catch (SQLException e) {
+            throw new PersistenciaException("Não foi possível gerar o relatório de estoque.", e);
+        }
+    }
+
     // ── UC03 – Mesas ─────────────────────────────────────────────────────────
 
     /** Retorna as mesas e os estados persistidos em ordem numérica. */

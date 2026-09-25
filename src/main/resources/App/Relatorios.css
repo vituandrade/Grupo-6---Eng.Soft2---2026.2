@@ -1,0 +1,193 @@
+.relatorios-root {
+    -fx-background-color: #f4f7f9;
+    -fx-font-family: "Arial";
+}
+
+.section-title {
+    -fx-font-size: 19px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1b2b31;
+}
+
+.report-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8px;
+    -fx-border-color: #d7e0e4;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-padding: 14px 16px;
+    -fx-alignment: CENTER-LEFT;
+    -fx-cursor: hand;
+}
+
+.report-card:hover {
+    -fx-background-color: #f8fafb;
+    -fx-border-color: #aebec3;
+}
+
+.report-card-active {
+    -fx-border-color: #ef9023;
+    -fx-border-width: 2px;
+    -fx-background-color: #fffaf4;
+}
+
+.report-card-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #213037;
+}
+
+.report-card-subtitle {
+    -fx-font-size: 11px;
+    -fx-text-fill: #7b898f;
+}
+
+.stripe-vendas,
+.stripe-itens,
+.stripe-consumo,
+.stripe-estoque {
+    -fx-background-radius: 4px;
+}
+
+.stripe-vendas {
+    -fx-background-color: #3b82c4;
+}
+
+.stripe-itens {
+    -fx-background-color: #ef9023;
+}
+
+.stripe-consumo {
+    -fx-background-color: #3c9d70;
+}
+
+.stripe-estoque {
+    -fx-background-color: #d8483d;
+}
+
+.content-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 8px;
+    -fx-border-color: #d7e0e4;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-padding: 22px;
+}
+
+.card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #26343a;
+}
+
+.card-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #7a898f;
+}
+
+.field-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4c5b62;
+}
+
+.text-field {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d5dee2;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-font-size: 13px;
+}
+
+.text-field:focused {
+    -fx-border-color: #9fb2b9;
+}
+
+.primary-button {
+    -fx-background-color: #ef9023;
+    -fx-background-radius: 5px;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111111;
+}
+
+.primary-button:hover {
+    -fx-background-color: #dc7f16;
+}
+
+.summary-card {
+    -fx-background-color: #f7f9fa;
+    -fx-background-radius: 6px;
+    -fx-border-color: #e0e7ea;
+    -fx-border-radius: 6px;
+    -fx-padding: 15px 17px;
+    -fx-min-height: 78px;
+}
+
+.summary-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #7b898f;
+}
+
+.summary-value {
+    -fx-font-size: 21px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #26343a;
+}
+
+.report-table {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #dde5e8;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-background-insets: 0;
+    -fx-table-cell-border-color: #edf1f2;
+}
+
+.report-table .column-header-background {
+    -fx-background-color: #102c33;
+}
+
+.report-table .column-header,
+.report-table .filler {
+    -fx-background-color: #102c33;
+    -fx-border-color: transparent;
+    -fx-size: 42px;
+}
+
+.report-table .column-header .label {
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.report-table .table-row-cell {
+    -fx-cell-size: 42px;
+    -fx-background-color: #ffffff;
+}
+
+.report-table .table-row-cell:filled:hover {
+    -fx-background-color: #f6f8f9;
+}
+
+.report-table .table-cell {
+    -fx-font-size: 12px;
+    -fx-text-fill: #526069;
+    -fx-padding: 9px 11px;
+    -fx-border-color: transparent transparent #eef1f2 transparent;
+}
+
+.message-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #7a898f;
+}
+
+.scroll-bar:vertical {
+    -fx-pref-width: 10px;
+}
+
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #b9c5c9;
+    -fx-background-radius: 5px;
+}

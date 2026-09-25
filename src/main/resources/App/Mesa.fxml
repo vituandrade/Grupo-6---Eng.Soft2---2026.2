@@ -84,6 +84,12 @@
                         styleClass="menu-button"
                         text="Histórico" />
 
+                <Button fx:id="botaoRelatorios"
+                        maxWidth="Infinity"
+                        onAction="#abrirRelatorios"
+                        styleClass="menu-button"
+                        text="Relatórios" />
+
             </VBox>
 
         </VBox>
